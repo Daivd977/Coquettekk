@@ -1137,6 +1137,11 @@ Tab5:AddToggle({
     end
 })
 
+
+--------------------------------------------------------------------------------------
+
+
+
 local fallDamageDisabled = false
 Players.LocalPlayer.CharacterAdded:Connect(function(character)
     local humanoid = character:WaitForChild("Humanoid")
@@ -1151,9 +1156,83 @@ Players.LocalPlayer.CharacterAdded:Connect(function(character)
     end
 end)
 
-Tab5:AddParagraph({
-    Title = "mais funçoes em breve!......",
-    Content = ""
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Função para atualizar a lista de carros no dropdown
+local function atualizarListaCarros()
+    local pastaVeiculos = Workspace:FindFirstChild("Vehicles")
+    local listaCarros = {}
+    
+    if pastaVeiculos then
+        for _, carro in ipairs(pastaVeiculos:GetChildren()) do
+            if carro.Name:match("Car$") then
+                table.insert(listaCarros, carro.Name)
+            end
+        end
+    end
+    
+    return listaCarros
+end
+
+-- Função para teleportar um carro específico para o void
+local function teleportarParaVoid(carro)
+    if not carro then return end
+    if not carro.PrimaryPart then
+        local corpo = carro:FindFirstChild("Body", true) or carro:FindFirstChild("Chassis", true)
+        if corpo and corpo:IsA("BasePart") then
+            carro.PrimaryPart = corpo
+        else
+            return
+        end
+    end
+    local posicaoVoid = Vector3.new(0, -1000, 0)
+    carro:SetPrimaryPartCFrame(CFrame.new(posicaoVoid))
+end
+
+-- Criar o dropdown
+local Dropdown = Tab5:AddDropdown({
+    Name = "Selecionar Carro do Jogador",
+    Description = "Selecione o carro de um jogador para destruir",
+    Default = nil,
+    Options = atualizarListaCarros(),
+    Callback = function(carroSelecionado)
+        -- Armazena o nome do carro selecionado para o botão usar
+        _G.CarroSelecionado = carroSelecionado
+    end
+})
+
+-- Atualizar o dropdown dinamicamente quando carros são adicionados ou removidos
+Workspace:WaitForChild("Vehicles").ChildAdded:Connect(function()
+    Dropdown:Set(atualizarListaCarros())
+end)
+Workspace:WaitForChild("Vehicles").ChildRemoved:Connect(function()
+    Dropdown:Set(atualizarListaCarros())
+end)
+
+-- Criar o botão para destruir o carro selecionado
+Tab5:AddButton({
+    Name = "Destruir Carro Selecionado",
+    Description = "Teleporta o carro selecionado para o void",
+    Callback = function()
+        if _G.CarroSelecionado then
+            local pastaVeiculos = Workspace:FindFirstChild("Vehicles")
+            if pastaVeiculos then
+                local carro = pastaVeiculos:FindFirstChild(_G.CarroSelecionado)
+                if carro then
+                    teleportarParaVoid(carro)
+                    print("Carro " .. _G.CarroSelecionado .. " foi teleportado para o void!")
+                else
+                    print("Carro selecionado não encontrado!")
+                end
+            else
+                print("Pasta de veículos não encontrada!")
+            end
+        else
+            print("Nenhum carro selecionado!")
+        end
+    end
 })
 
 
