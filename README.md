@@ -1333,25 +1333,33 @@ end)
 
 -------------------------------------------------------------------------------------------------------
 
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
+-- Namespace local para evitar conflitos
+local TeleportCarro = {}
+
+-- Serviços
+TeleportCarro.PlayersService = game:GetService("Players")
+TeleportCarro.WorkspaceService = game:GetService("Workspace")
+TeleportCarro.CurrentPlayer = TeleportCarro.PlayersService.LocalPlayer
 
 -- Função para exibir notificação
-local function mostrarNotificacao(mensagem)
+function TeleportCarro:ShowNotification(message)
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "Aviso",
-            Text = mensagem,
+            Text = message,
             Duration = 5
         })
     end)
 end
 
 -- Função para desativar/ativar dano de queda
-local function toggleFallDamage(disable)
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then return false end
-    local humanoid = LocalPlayer.Character.Humanoid
+function TeleportCarro:ToggleFallDamage(disable)
+    local character = self.CurrentPlayer.Character
+    if not character or not character:FindFirstChild("Humanoid") then
+        self:ShowNotification("Personagem não encontrado!")
+        return false
+    end
+    local humanoid = character.Humanoid
     if disable then
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
@@ -1365,12 +1373,19 @@ local function toggleFallDamage(disable)
     end
 end
 
--- Função para teleportar o jogador para o assento do carro
-local function teleportToSeat(seat, car)
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then return false end
-    local humanoid = LocalPlayer.Character.Humanoid
-    local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return false end
+-- Função para teleportar o jogador para o assento do veículo
+function TeleportCarro:MoveToVehicleSeat(seat, vehicle)
+    local character = self.CurrentPlayer.Character
+    if not character or not character:FindFirstChild("Humanoid") then
+        self:ShowNotification("Personagem não encontrado!")
+        return false
+    end
+    local humanoid = character.Humanoid
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        self:ShowNotification("Parte raiz do personagem não encontrada!")
+        return false
+    end
 
     humanoid.Sit = false
     task.wait(0.1)
@@ -1383,99 +1398,108 @@ local function teleportToSeat(seat, car)
     return humanoid.SeatPart == seat
 end
 
--- Função para teleportar o carro para a posição do jogador com delay
-local function teleportToPlayer(car, playerPosition)
-    if not car then return end
-    if not car.PrimaryPart then
-        local body = car:FindFirstChild("Body", true) or car:FindFirstChild("Chassis", true)
+-- Função para teleportar o veículo para a posição do jogador com delay
+function TeleportCarro:TeleportVehicleToPlayer(vehicle, playerPos)
+    if not vehicle then
+        self:ShowNotification("Veículo inválido!")
+        return
+    end
+    if not vehicle.PrimaryPart then
+        local body = vehicle:FindFirstChild("Body", true) or vehicle:FindFirstChild("Chassis", true)
         if body and body:IsA("BasePart") then
-            car.PrimaryPart = body
+            vehicle.PrimaryPart = body
         else
+            self:ShowNotification("Parte principal do veículo não encontrada!")
             return
         end
     end
-    -- Teleportar o carro para a posição do jogador com deslocamento
-    local targetPosition = playerPosition + Vector3.new(5, 0, 5) -- Deslocamento para evitar colisão
-    car:SetPrimaryPartCFrame(CFrame.new(targetPosition))
+    -- Teleportar o veículo para a posição do jogador com deslocamento
+    local targetPos = playerPos + Vector3.new(5, 0, 5) -- Deslocamento para evitar colisão
+    vehicle:SetPrimaryPartCFrame(CFrame.new(targetPos))
     task.wait(0.5) -- Delay de 0,5 segundos após teleporte
 end
 
--- Função para sair do carro e voltar à posição original
-local function exitCarAndReturn(originalPosition)
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then return end
-    local humanoid = LocalPlayer.Character.Humanoid
+-- Função para sair do veículo e voltar à posição original
+function TeleportCarro:ExitVehicleAndReturn(originalPos)
+    local character = self.CurrentPlayer.Character
+    if not character or not character:FindFirstChild("Humanoid") then return end
+    local humanoid = character.Humanoid
     if humanoid.SeatPart then
         humanoid.Sit = false
     end
     task.wait(0.1)
-    if originalPosition then
-        LocalPlayer.Character:PivotTo(CFrame.new(originalPosition))
+    if originalPos then
+        character:PivotTo(CFrame.new(originalPos))
     end
 end
 
--- Função para o callback do botão
-local function trazerCarroSelecionado()
-    if not _G.CarroSelecionado then
-        mostrarNotificacao("Nenhum carro selecionado!")
+-- Função principal para o callback do botão
+function TeleportCarro:BringSelectedVehicle(vehicleName)
+    if not vehicleName or vehicleName == "" then
+        self:ShowNotification("Nenhum carro selecionado!")
         return
     end
 
-    local pastaVeiculos = Workspace:FindFirstChild("Vehicles")
-    if not pastaVeiculos then
-        mostrarNotificacao("Pasta de veículos não encontrada!")
+    local vehiclesFolder = self.WorkspaceService:FindFirstChild("Vehicles")
+    if not vehiclesFolder then
+        self:ShowNotification("Pasta de veículos não encontrada!")
         return
     end
 
-    local carro = pastaVeiculos:FindFirstChild(_G.CarroSelecionado)
-    if not carro then
-        mostrarNotificacao("Carro selecionado não encontrado!")
+    local vehicle = vehiclesFolder:FindFirstChild(vehicleName)
+    if not vehicle then
+        self:ShowNotification("Carro selecionado não encontrado!")
         return
     end
 
-    local vehicleSeat = carro:FindFirstChildWhichIsA("VehicleSeat", true)
+    local vehicleSeat = vehicle:FindFirstChildWhichIsA("VehicleSeat", true)
     if not vehicleSeat then
-        mostrarNotificacao("Assento do carro não encontrado!")
+        self:ShowNotification("Assento do carro não encontrado!")
         return
     end
 
     if vehicleSeat.Occupant then
-        mostrarNotificacao("O teleporte do carro não foi possível, há alguém sentado no assento do motorista!")
+        self:ShowNotification("O teleporte do carro não foi possível, há alguém sentado no assento do motorista!")
         return
     end
 
     -- Salvar a posição original do jogador
-    local originalPosition
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        originalPosition = LocalPlayer.Character.HumanoidRootPart.Position
+    local originalPos
+    local character = self.CurrentPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        originalPos = character.HumanoidRootPart.Position
     else
-        mostrarNotificacao("Personagem do jogador não encontrado!")
+        self:ShowNotification("Personagem do jogador não encontrado!")
         return
     end
 
     -- Desativar dano de queda
-    local fallDamageDisabled = toggleFallDamage(true)
+    local isFallDamageOff = self:ToggleFallDamage(true)
 
-    -- Tentar teleportar para o assento e mover o carro para a posição do jogador
-    local success = teleportToSeat(vehicleSeat, carro)
+    -- Tentar teleportar para o assento e mover o veículo
+    local success = self:MoveToVehicleSeat(vehicleSeat, vehicle)
     if success then
-        teleportToPlayer(carro, originalPosition)
-        mostrarNotificacao("Carro " .. _G.CarroSelecionado .. " foi teleportado para você!")
-        exitCarAndReturn(originalPosition) -- Voltar à posição original após a notificação
+        self:TeleportVehicleToPlayer(vehicle, originalPos)
+        self:ShowNotification("Carro " .. vehicleName .. " foi teleportado para você!")
+        self:ExitVehicleAndReturn(originalPos) -- Voltar à posição original após a notificação
     else
-        mostrarNotificacao("Falha ao sentar no carro!")
+        self:ShowNotification("Falha ao sentar no carro!")
     end
 
     -- Reativar dano de queda
-    toggleFallDamage(false)
+    self:ToggleFallDamage(false)
 end
 
--- Conectar ao botão (substitua pelo seu código de botão existente)
+-- Conectar ao botão (ajuste conforme o método do seu dropdown)
 Tab5:AddButton({
     Name = "Trazer Carro Selecionado",
     Description = "Teleporta o carro selecionado para sua posição",
-    Callback = trazerCarroSelecionado
+    Callback = function()
+        -- Ajuste esta linha para o método real do seu dropdown
+        local selectedVehicle = Tab1:GetDropdownValue("Selecionar Carro do Jogador") -- Placeholder
+        TeleportCarro:BringSelectedVehicle(selectedVehicle)
+    end
 })
-
 
 ---------------------------------------------------------------------------------------------------------------------------------
                                                    -- === Tab 6: RGB === --
@@ -4587,7 +4611,7 @@ local lagLoopMacaAtivo = false
 local loopConexaoMaca = nil
 
 local function encontrarMaca()
-    local workspaceCom = workspace:FindFirstChild("WorkspaceCom")
+    local workspaceCom = Workspace:FindFirstChild("WorkspaceCom")
     if workspaceCom then
         local giveTools = workspaceCom:FindFirstChild("001_GiveTools")
         if giveTools then
@@ -4638,62 +4662,9 @@ ToggleLagMaca:Callback(function(Value)
     end
 end)
 
--- GHOST METER
-local destinoGhostMeter = Vector3.new(-320.5, 7.52, -108.38)
-local lagLoopGhostMeterAtivo = false
-local loopConexaoGhostMeter = nil
 
-local function encontrarGhostMeter()
-    local workspaceCom = workspace:FindFirstChild("WorkspaceCom")
-    if workspaceCom then
-        local giveTools = workspaceCom:FindFirstChild("001_GiveTools")
-        if giveTools then
-            local ghostMeter = giveTools:FindFirstChild("GhostMeter")
-            if ghostMeter and ghostMeter:FindFirstChild("ClickDetector") then
-                return ghostMeter
-            end
-        end
-    end
-    return nil
-end
 
-local ToggleLagGhostMeter = Tab10:AddToggle({
-    Name = "👻 Lag Server Caça Fantasma",
-    Description = "Faz spam de caça fantasmas para travar o servidor",
-    Default = false
-})
-ToggleLagGhostMeter:Callback(function(Value)
-    lagLoopGhostMeterAtivo = Value
-    if lagLoopGhostMeterAtivo then
-        local ghostMeterObjeto = encontrarGhostMeter()
-        if not ghostMeterObjeto then
-            lagLoopGhostMeterAtivo = false
-            ToggleLagGhostMeter:Set(false)
-            return
-        end
-        loopConexaoGhostMeter = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then
-                char = LocalPlayer.CharacterAdded:Wait()
-            end
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                char.HumanoidRootPart.CFrame = CFrame.new(destinoGhostMeter)
-            end
-            ghostMeterObjeto = encontrarGhostMeter()
-            if ghostMeterObjeto and ghostMeterObjeto:FindFirstChild("ClickDetector") then
-                pcall(function()
-                    fireclickdetector(ghostMeterObjeto.ClickDetector)
-                end)
-            end
-            wait(0.3)
-        end)
-    else
-        if loopConexaoGhostMeter then
-            loopConexaoGhostMeter:Disconnect()
-            loopConexaoGhostMeter = nil
-        end
-    end
-end)
+
 ----------------------------------------------------------------------------------------------------------------------------------------------
                                                -- === Tab 11: Scripts === --
 ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -4769,6 +4740,9 @@ Tab11:AddButton({
                                           -- === Tab 12: Teleportes === --
 -----------------------------------------------------------------------------------------------------------------------------------------
 
+
+
+
 local player = game.Players.LocalPlayer
 local selectedLocation = "Morro"
 
@@ -4792,7 +4766,7 @@ local Dropdown = Tab12:AddDropdown({
         "Beira-mar 2"
     },
     Callback = function(value)
-        selectedLocation = value
+        coquetteHubTeleportLocation = value
     end
 })
 
@@ -4800,9 +4774,10 @@ local TeleportButton = Tab12:AddButton({
     Name = "Teleportar",
     Description = "Teleporta para o local selecionado",
     Callback = function()
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local humanoidRootPart = player.Character.HumanoidRootPart
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        local teleportPlayer = game.Players.LocalPlayer
+        if teleportPlayer.Character and teleportPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local humanoidRootPart = teleportPlayer.Character.HumanoidRootPart
+            local humanoid = teleportPlayer.Character:FindFirstChildOfClass("Humanoid")
             local locations = {
                 ["Morro"] = Vector3.new(-348.64, 65.94, -458.08),
                 ["Praça"] = Vector3.new(-26.17, 3.48, -0.93),
@@ -4818,14 +4793,14 @@ local TeleportButton = Tab12:AddButton({
                 ["Beira-mar 2"] = Vector3.new(42.39, 2.94, 1336.14)
             }
 
-            if locations[selectedLocation] then
+            if locations[coquetteHubTeleportLocation] then
                 pcall(function()
                     if humanoid then
                         humanoid:ChangeState(Enum.HumanoidStateType.Physics)
                         humanoid.WalkSpeed = 0
                     end
                     humanoidRootPart.Anchored = true
-                    humanoidRootPart.CFrame = CFrame.new(locations[selectedLocation])
+                    humanoidRootPart.CFrame = CFrame.new(locations[coquetteHubTeleportLocation])
                     task.wait(0.4)
                     humanoidRootPart.Anchored = false
                     if humanoid then
@@ -4837,11 +4812,3 @@ local TeleportButton = Tab12:AddButton({
         end
     end
 })
-
-
-----------------------------------------------------------------------------------------------------------------------------------------------
-                                               -- === Tab 13: Configuraçao === --
-----------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
