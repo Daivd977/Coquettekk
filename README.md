@@ -1146,9 +1146,8 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
--- Função para exibir notificação (ajuste conforme sua biblioteca de UI)
+-- Função para exibir notificação
 local function mostrarNotificacao(mensagem)
-    -- Exemplo: assumindo que a biblioteca tem um método Notify
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "Aviso",
@@ -1209,7 +1208,7 @@ local function teleportToSeat(seat, car)
     return humanoid.SeatPart == seat
 end
 
--- Função para teleportar o carro para o void
+-- Função para teleportar o carro para o void com delay
 local function teleportToVoid(car)
     if not car then return end
     if not car.PrimaryPart then
@@ -1222,7 +1221,7 @@ local function teleportToVoid(car)
     end
     local voidPosition = Vector3.new(0, -1000, 0)
     car:SetPrimaryPartCFrame(CFrame.new(voidPosition))
-    task.wait(0.5)
+    task.wait(0.5) -- Delay de 0,5 segundos após teleporte
 end
 
 -- Função para sair do carro e voltar à posição original
@@ -1245,12 +1244,11 @@ local Dropdown = Tab1:AddDropdown({
     Default = nil,
     Options = atualizarListaCarros(),
     Callback = function(carroSelecionado)
-        -- Armazena o nome do carro selecionado para o botão usar
         _G.CarroSelecionado = carroSelecionado
     end
 })
 
--- Atualizar o dropdown dinamicamente quando carros são adicionados ou removidos
+-- Atualizar o dropdown dinamicamente
 Workspace:WaitForChild("Vehicles").ChildAdded:Connect(function()
     Dropdown:Set(atualizarListaCarros())
 end)
@@ -1307,8 +1305,8 @@ Tab1:AddButton({
         local success = teleportToSeat(vehicleSeat, carro)
         if success then
             teleportToVoid(carro)
-            exitCarAndReturn(originalPosition)
             mostrarNotificacao("Carro " .. _G.CarroSelecionado .. " foi teleportado para o void!")
+            exitCarAndReturn(originalPosition) -- Voltar à posição original após a notificação
         else
             mostrarNotificacao("Falha ao sentar no carro!")
         end
@@ -1332,8 +1330,6 @@ Players.LocalPlayer.CharacterAdded:Connect(function(character)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
     end
 end)
-
-
 
 
 
