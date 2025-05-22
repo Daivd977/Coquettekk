@@ -1238,7 +1238,7 @@ local function exitCarAndReturn(originalPosition)
 end
 
 -- Criar o dropdown
-local Dropdown = Tab1:AddDropdown({
+local Dropdown = Tab5:AddDropdown({
     Name = "Selecionar Carro do Jogador",
     Description = "Selecione o carro de um jogador para destruir",
     Default = nil,
@@ -1257,7 +1257,7 @@ Workspace:WaitForChild("Vehicles").ChildRemoved:Connect(function()
 end)
 
 -- Criar o botão para destruir o carro selecionado
-Tab1:AddButton({
+Tab5:AddButton({
     Name = "Destruir Carro Selecionado",
     Description = "Teleporta o carro selecionado para o void",
     Callback = function()
@@ -1331,7 +1331,150 @@ Players.LocalPlayer.CharacterAdded:Connect(function(character)
     end
 end)
 
+-------------------------------------------------------------------------------------------------------
 
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Função para exibir notificação
+local function mostrarNotificacao(mensagem)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aviso",
+            Text = mensagem,
+            Duration = 5
+        })
+    end)
+end
+
+-- Função para desativar/ativar dano de queda
+local function toggleFallDamage(disable)
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then return false end
+    local humanoid = LocalPlayer.Character.Humanoid
+    if disable then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
+        humanoid.PlatformStand = false
+        return true
+    else
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+        return false
+    end
+end
+
+-- Função para teleportar o jogador para o assento do carro
+local function teleportToSeat(seat, car)
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then return false end
+    local humanoid = LocalPlayer.Character.Humanoid
+    local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return false end
+
+    humanoid.Sit = false
+    task.wait(0.1)
+
+    rootPart.CFrame = seat.CFrame + Vector3.new(0, 5, 0)
+    task.wait(0.1)
+
+    seat:Sit(humanoid)
+    task.wait(0.5)
+    return humanoid.SeatPart == seat
+end
+
+-- Função para teleportar o carro para a posição do jogador com delay
+local function teleportToPlayer(car, playerPosition)
+    if not car then return end
+    if not car.PrimaryPart then
+        local body = car:FindFirstChild("Body", true) or car:FindFirstChild("Chassis", true)
+        if body and body:IsA("BasePart") then
+            car.PrimaryPart = body
+        else
+            return
+        end
+    end
+    -- Teleportar o carro para a posição do jogador com deslocamento
+    local targetPosition = playerPosition + Vector3.new(5, 0, 5) -- Deslocamento para evitar colisão
+    car:SetPrimaryPartCFrame(CFrame.new(targetPosition))
+    task.wait(0.5) -- Delay de 0,5 segundos após teleporte
+end
+
+-- Função para sair do carro e voltar à posição original
+local function exitCarAndReturn(originalPosition)
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Humanoid") then return end
+    local humanoid = LocalPlayer.Character.Humanoid
+    if humanoid.SeatPart then
+        humanoid.Sit = false
+    end
+    task.wait(0.1)
+    if originalPosition then
+        LocalPlayer.Character:PivotTo(CFrame.new(originalPosition))
+    end
+end
+
+-- Função para o callback do botão
+local function trazerCarroSelecionado()
+    if not _G.CarroSelecionado then
+        mostrarNotificacao("Nenhum carro selecionado!")
+        return
+    end
+
+    local pastaVeiculos = Workspace:FindFirstChild("Vehicles")
+    if not pastaVeiculos then
+        mostrarNotificacao("Pasta de veículos não encontrada!")
+        return
+    end
+
+    local carro = pastaVeiculos:FindFirstChild(_G.CarroSelecionado)
+    if not carro then
+        mostrarNotificacao("Carro selecionado não encontrado!")
+        return
+    end
+
+    local vehicleSeat = carro:FindFirstChildWhichIsA("VehicleSeat", true)
+    if not vehicleSeat then
+        mostrarNotificacao("Assento do carro não encontrado!")
+        return
+    end
+
+    if vehicleSeat.Occupant then
+        mostrarNotificacao("O teleporte do carro não foi possível, há alguém sentado no assento do motorista!")
+        return
+    end
+
+    -- Salvar a posição original do jogador
+    local originalPosition
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        originalPosition = LocalPlayer.Character.HumanoidRootPart.Position
+    else
+        mostrarNotificacao("Personagem do jogador não encontrado!")
+        return
+    end
+
+    -- Desativar dano de queda
+    local fallDamageDisabled = toggleFallDamage(true)
+
+    -- Tentar teleportar para o assento e mover o carro para a posição do jogador
+    local success = teleportToSeat(vehicleSeat, carro)
+    if success then
+        teleportToPlayer(carro, originalPosition)
+        mostrarNotificacao("Carro " .. _G.CarroSelecionado .. " foi teleportado para você!")
+        exitCarAndReturn(originalPosition) -- Voltar à posição original após a notificação
+    else
+        mostrarNotificacao("Falha ao sentar no carro!")
+    end
+
+    -- Reativar dano de queda
+    toggleFallDamage(false)
+end
+
+-- Conectar ao botão (substitua pelo seu código de botão existente)
+Tab5:AddButton({
+    Name = "Trazer Carro Selecionado",
+    Description = "Teleporta o carro selecionado para sua posição",
+    Callback = trazerCarroSelecionado
+})
 
 
 ---------------------------------------------------------------------------------------------------------------------------------
