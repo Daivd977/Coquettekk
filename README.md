@@ -392,162 +392,90 @@ Tab2:AddSlider({
     end
  })
 
- local Clipon = false
-
-
-
-local NoclipManager = {
-    Enabled = false,
-    CurrentCharacter = nil,
-    HeartbeatConnection = nil,
-    CharAddedConnection = nil,
-    CharRemovingConnection = nil
+ local SoccerBallManager = {
+    ActiveBalls = {},
+    CollisionEnabled = false,
+    Connection = nil
 }
 
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Função principal de segurança para o noclip
-local function manageCollisions(character, state)
-    if not character or not character:IsDescendantOf(Workspace) then return end
+-- Função principal para modificar as colisões
+local function setBallCollision(ball, state)
+    if not ball or not ball.Parent then return end
     
-    local humanoid = character:FindFirstChild("Humanoid")
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    -- Aplica as propriedades usando o método Set da sua UI library
+    pcall(function()
+        ball:Set("CanCollide", state)
+        ball:Set("Anchored", not state)
+        ball:Set("CollisionGroup", state and "Default" or "NoCollision")
+    end)
     
-    -- Verificação crítica de componentes
-    if not humanoid or not rootPart then
-        warn("[NOCLIP ERROR] Componentes essenciais não encontrados!")
-        return
-    end
+    -- Atualiza a tabela de controle
+    SoccerBallManager.ActiveBalls[ball] = state
+end
 
-    -- Atualização segura das partes
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = not state
-            if state then
-                part.Anchored = false
+-- Encontra e processa as bolas existentes
+local function processExistingBalls()
+    local soccerFolder = Workspace:FindFirstChild("Com", true)
+                      and Workspace.Com:FindFirstChild("001_SoccerBalls")
+    
+    if soccerFolder then
+        for _, child in ipairs(soccerFolder:GetChildren()) do
+            if child.Name:match("^Soccer") then
+                setBallCollision(child, SoccerBallManager.CollisionEnabled)
             end
         end
     end
-
-    -- Controle de estados do humanoid
-    humanoid.PlatformStand = false
-    humanoid:ChangeState(Enum.HumanoidStateType.Running)
 end
 
--- Sistema anti-void melhorado
-local function antiVoidSystem(rootPart)
-    if rootPart.Position.Y < -500 then
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-        
-        local rayResult = Workspace:Raycast(
-            rootPart.Position,
-            Vector3.new(0, 1000, 0),
-            raycastParams
-        )
-        
-        if rayResult then
-            rootPart.CFrame = CFrame.new(rayResult.Position + Vector33.new(0, 5, 0))
-        else
-            rootPart.CFrame = CFrame.new(0, 100, 0)
-        end
-    end
-end
-
--- Controle centralizado do loop principal
-local function noclipHeartbeat()
-    if NoclipManager.HeartbeatConnection then
-        NoclipManager.HeartbeatConnection:Disconnect()
-    end
-
-    NoclipManager.HeartbeatConnection = RunService.Heartbeat:Connect(function()
-        local character = LocalPlayer.Character
-        if not character or character ~= NoclipManager.CurrentCharacter then return end
-        
-        manageCollisions(character, NoclipManager.Enabled)
-        
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if rootPart then
-            antiVoidSystem(rootPart)
-        end
-    end)
-end
-
--- Sistema de reinicialização no respawn
-local function handleNewCharacter(character)
-    NoclipManager.CurrentCharacter = character
+-- Monitora novas bolas criadas
+local function monitorNewBalls()
+    local soccerFolder = Workspace:FindFirstChild("Com", true)
+                      and Workspace.Com:FindFirstChild("001_SoccerBalls")
     
-    local humanoid = character:WaitForChild("Humanoid", 2)
-    local rootPart = character:WaitForChild("HumanoidRootPart", 2)
-    
-    if not humanoid or not rootPart then
-        warn("[NOCLIP] Falha ao detectar novo personagem!")
-        return
-    end
-
-    if NoclipManager.Enabled then
-        task.wait(0.5) -- Espera pela estabilização do personagem
-        manageCollisions(character, true)
-        noclipHeartbeat()
+    if soccerFolder then
+        SoccerBallManager.Connection = soccerFolder.ChildAdded:Connect(function(child)
+            if child.Name:match("^Soccer") then
+                task.wait(0.5) -- Espera a inicialização completa
+                setBallCollision(child, SoccerBallManager.CollisionEnabled)
+            end
+        end)
     end
 end
 
--- Controle do toggle principal
-local function setNoclip(state)
-    NoclipManager.Enabled = state
-    
-    if state then
-        local character = LocalPlayer.Character
-        if character then
-            NoclipManager.CurrentCharacter = character
-            manageCollisions(character, true)
-            noclipHeartbeat()
-            
-            -- Conecta os listeners de character
-            NoclipManager.CharAddedConnection = LocalPlayer.CharacterAdded:Connect(handleNewCharacter)
-            NoclipManager.CharRemovingConnection = LocalPlayer.CharacterRemoving:Connect(function(c)
-                if c == NoclipManager.CurrentCharacter then
-                    manageCollisions(c, false)
-                end
-            end)
-        end
-    else
-        -- Limpeza completa
-        if NoclipManager.HeartbeatConnection then
-            NoclipManager.HeartbeatConnection:Disconnect()
-        end
-        if NoclipManager.CharAddedConnection then
-            NoclipManager.CharAddedConnection:Disconnect()
-        end
-        if NoclipManager.CharRemovingConnection then
-            NoclipManager.CharRemovingConnection:Disconnect()
-        end
-        
-        if NoclipManager.CurrentCharacter then
-            manageCollisions(NoclipManager.CurrentCharacter, false)
-        end
-    end
-end
-
--- Configuração inicial
-LocalPlayer.CharacterAdded:Connect(handleNewCharacter)
-if LocalPlayer.Character then
-    handleNewCharacter(LocalPlayer.Character)
-end
-
--- Cria o toggle na interface
-local Toggle1 = Tab2:AddToggle({
-    Name = "Noclip Avançado",
-    Description = "Versão otimizada com anti-bugs",
+-- Sistema de toggle para controle via UI
+local Toggle2 = Tab2:AddToggle({
+    Name = "Colisão das Bolas",
+    Description = "Ativa/desativa colisão com bolas de futebol",
     Default = false
 })
 
-Toggle1:Callback(function(state)
-    setNoclip(state)
-    print("Noclip:", state and "ATIVADO" or "DESATIVADO")
+Toggle2:Callback(function(state)
+    SoccerBallManager.CollisionEnabled = state
+    
+    -- Processa todas as bolas existentes
+    processExistingBalls()
+    
+    -- Inicia/para o monitoramento
+    if state then
+        monitorNewBalls()
+    else
+        if SoccerBallManager.Connection then
+            SoccerBallManager.Connection:Disconnect()
+        end
+    end
+    
+    print("Colisão das bolas:", state and "ATIVADA" or "DESATIVADA")
+end)
+
+-- Atualiza colisões ao respawnar
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
+    if SoccerBallManager.CollisionEnabled then
+        task.wait(1) -- Espera o personagem carregar
+        processExistingBalls()
+    end
 end)
 
 -------------------------------------------------------------------------------
