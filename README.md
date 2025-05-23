@@ -1016,137 +1016,14 @@ Tab4:AddParagraph({
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
 
 -- Namespace para evitar conflitos
 local TeleportCarro = {}
 TeleportCarro.Players = Players
 TeleportCarro.Workspace = Workspace
 TeleportCarro.LocalPlayer = LocalPlayer
-
--- Função para exibir notificação
-function TeleportCarro:MostrarNotificacao(mensagem)
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Aviso",
-            Text = mensagem,
-            Duration = 5
-        })
-    end)
-end
-
--- Função para desativar/ativar dano de queda
-function TeleportCarro:ToggleFallDamage(disable)
-    if not self.LocalPlayer.Character or not self.LocalPlayer.Character:FindFirstChild("Humanoid") then return false end
-    local humanoid = self.LocalPlayer.Character.Humanoid
-    if disable then
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
-        humanoid.PlatformStand = false
-        return true
-    else
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
-        return false
-    end
-end
-
--- Função para teleportar o jogador para o assento do carro
-function TeleportCarro:TeleportToSeat(seat, car)
-    if not self.LocalPlayer.Character or not self.LocalPlayer.Character:FindFirstChild("Humanoid") then
-        self:MostrarNotificacao("Personagem não encontrado!")
-        return false
-    end
-    local humanoid = self.LocalPlayer.Character.Humanoid
-    local rootPart = self.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then
-        self:MostrarNotificacao("Parte raiz do personagem não encontrada!")
-        return false
-    end
-
-    humanoid.Sit = false
-    task.wait(0.1)
-
-    rootPart.CFrame = seat.CFrame + Vector3.new(0, 5, 0)
-    task.wait(0.1)
-
-    seat:Sit(humanoid)
-    task.wait(0.5)
-    return humanoid.SeatPart == seat
-end
-
--- Função para teleportar o carro para o void com delay
-function TeleportCarro:TeleportToVoid(car)
-    if not car then
-        self:MostrarNotificacao("Veículo inválido!")
-        return
-    end
-    if not car.PrimaryPart then
-        local body = car:FindFirstChild("Body", true) or car:FindFirstChild("Chassis", true)
-        if body and body:IsA("BasePart") then
-            car.PrimaryPart = body
-        else
-            self:MostrarNotificacao("Parte principal do veículo não encontrada!")
-            return
-        end
-    end
-    local voidPosition = Vector3.new(0, -1000, 0)
-    car:SetPrimaryPartCFrame(CFrame.new(voidPosition))
-    task.wait(0.5)
-end
-
-function TeleportCarro:TeleportToPlayer(car, playerPos)
-    if not car then
-        self:MostrarNotificacao("Veículo inválido!")
-        return
-    end
-    if not car.PrimaryPart then
-        local body = car:FindFirstChild("Body", true) or car:FindFirstChild("Chassis", true)
-        if body and body:IsA("BasePart") then
-            car.PrimaryPart = body
-        else
-            self:MostrarNotificacao("Parte principal do veículo não encontrada!")
-            return
-        end
-    end
-    local targetPos = playerPos + Vector3.new(5, 0, 5)
-    car:SetPrimaryPartCFrame(CFrame.new(targetPos))
-    task.wait(0.5)
-end
-
-function TeleportCarro:ExitCarAndReturn(originalPos)
-    if not self.LocalPlayer.Character or not self.LocalPlayer.Character:FindFirstChild("Humanoid") then return end
-    local humanoid = self.LocalPlayer.Character.Humanoid
-    if humanoid.SeatPart then
-        humanoid.Sit = false
-    end
-    task.wait(0.1)
-    if originalPos then
-        self.LocalPlayer.Character:PivotTo(CFrame.new(originalPos))
-    end
-end
-
-function TeleportCarro:AtualizarListaCarros()
-    local pastaVeiculos = self.Workspace:FindFirstChild("Vehicles")
-    local listaCarros = {}
-    if pastaVeiculos then
-        for _, carro in ipairs(pastaVeiculos:GetChildren()) do
-            if carro.Name:match("Car$") then
-                table.insert(listaCarros, carro.Name)
-            end
-        end
-    end
-    return listaCarros
-end
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
-
--- Namespace para evitar conflitos
-local TeleportCarro = {}
-TeleportCarro.Players = Players
-TeleportCarro.Workspace = Workspace
-TeleportCarro.LocalPlayer = LocalPlayer
+TeleportCarro.Camera = Camera
 
 -- Função para exibir notificação
 function TeleportCarro:MostrarNotificacao(mensagem)
@@ -1289,7 +1166,7 @@ Tab5:AddToggle({
             if self.LocalPlayer.Character and self.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 originalPosition = self.LocalPlayer.Character.HumanoidRootPart.Position
             else
-                self:MostrarNotificacao("Personagem não encontrado!")
+                TeleportCarro:MostrarNotificacao("Personagem não encontrado!")
                 return
             end
 
@@ -1343,6 +1220,57 @@ local Dropdown = Tab5:AddDropdown({
     Options = TeleportCarro:AtualizarListaCarros(),
     Callback = function(carroSelecionado)
         _G.SelectedVehicle = carroSelecionado
+    end
+})
+
+-- Toggle para ver a câmera do carro selecionado
+Tab5:AddToggle({
+    Name = "Ver Câmera do Carro Selecionado",
+    Description = "Foca a câmera no carro selecionado",
+    Default = false,
+    Callback = function(state)
+        if state then
+            if not _G.SelectedVehicle or _G.SelectedVehicle == "" then
+                TeleportCarro:MostrarNotificacao("Nenhum carro selecionado!")
+                return
+            end
+
+            local vehiclesFolder = TeleportCarro.Workspace:FindFirstChild("Vehicles")
+            if not vehiclesFolder then
+                TeleportCarro:MostrarNotificacao("Pasta de veículos não encontrada!")
+                return
+            end
+
+            local vehicle = vehiclesFolder:FindFirstChild(_G.SelectedVehicle)
+            if not vehicle then
+                TeleportCarro:MostrarNotificacao("Carro selecionado não encontrado!")
+                return
+            end
+
+            local vehicleSeat = vehicle:FindFirstChildWhichIsA("VehicleSeat", true)
+            if not vehicleSeat then
+                TeleportCarro:MostrarNotificacao("Assento do carro não encontrado!")
+                return
+            end
+
+            -- Salvar o estado original da câmera
+            TeleportCarro.OriginalCameraSubject = TeleportCarro.Camera.CameraSubject
+            TeleportCarro.OriginalCameraType = TeleportCarro.Camera.CameraType
+
+            -- Ajustar a câmera para o assento do carro, mesmo se ocupado
+            TeleportCarro.Camera.CameraSubject = vehicleSeat
+            TeleportCarro.Camera.CameraType = Enum.CameraType.Follow
+            TeleportCarro:MostrarNotificacao("Câmera ajustada para o carro " .. _G.SelectedVehicle .. "!")
+        else
+            -- Restaurar a câmera ao estado original
+            if TeleportCarro.OriginalCameraSubject then
+                TeleportCarro.Camera.CameraSubject = TeleportCarro.OriginalCameraSubject
+                TeleportCarro.Camera.CameraType = TeleportCarro.OriginalCameraType or Enum.CameraType.Custom
+                TeleportCarro:MostrarNotificacao("Câmera restaurada ao normal!")
+                TeleportCarro.OriginalCameraSubject = nil
+                TeleportCarro.OriginalCameraType = nil
+            end
+        end
     end
 })
 
