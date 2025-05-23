@@ -396,153 +396,158 @@ Tab2:AddSlider({
 
 
 
--- Variáveis para o noclip
-local noclipEnabled = false
-local noclipConnections = {}
+local NoclipManager = {
+    Enabled = false,
+    CurrentCharacter = nil,
+    HeartbeatConnection = nil,
+    CharAddedConnection = nil,
+    CharRemovingConnection = nil
+}
+
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
--- Função para ativar/desativar o noclip
-local function setNoclip(state)
-    local character = LocalPlayer.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then
-        print("Personagem ou HumanoidRootPart não encontrado ao tentar ativar/desativar o Noclip!")
-        return
-    end
-
+-- Função principal de segurança para o noclip
+local function manageCollisions(character, state)
+    if not character or not character:IsDescendantOf(Workspace) then return end
+    
     local humanoid = character:FindFirstChild("Humanoid")
     local rootPart = character:FindFirstChild("HumanoidRootPart")
-
+    
+    -- Verificação crítica de componentes
     if not humanoid or not rootPart then
-        print("Humanoid ou RootPart não encontrado ao tentar ativar/desativar o Noclip!")
+        warn("[NOCLIP ERROR] Componentes essenciais não encontrados!")
         return
     end
 
-    noclipEnabled = state
-
-    if noclipEnabled then
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-
-        humanoid.PlatformStand = false
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-        humanoid:ChangeState(Enum.HumanoidStateType.Running)
-
-        local connection = RunService.Heartbeat:Connect(function()
-            if not noclipEnabled or not character or not character.Parent then
-                connection:Disconnect()
-                return
-            end
-
-            for _, part in pairs(character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-
-            if rootPart.Position.Y < -500 then
-                local rayOrigin = rootPart.Position
-                local rayDirection = Vector3.new(0, 500, 0)
-                local raycastParams = RaycastParams.new()
-                raycastParams.FilterDescendantsInstances = {character}
-                raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                local raycastResult = Workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-
-                if raycastResult then
-                    rootPart.CFrame = CFrame.new(raycastResult.Position + Vector3.new(0, 3, 0))
-                    print("Personagem estava caindo no void, reposicionado acima do chão!")
-                else
-                    rootPart.CFrame = CFrame.new(Vector3.new(0, 50, 0))
-                    print("Chão não encontrado, personagem movido para uma posição segura!")
-                end
-            end
-        end)
-        table.insert(noclipConnections, connection)
-
-        print("Noclip ativado! Você pode atravessar objetos e se mover normalmente.")
-    else
-        for _, connection in pairs(noclipConnections) do
-            connection:Disconnect()
-        end
-        noclipConnections = {}
-
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = true
-            end
-        end
-
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-                part.Velocity = Vector3.new(0, 0, 0)
-                part.RotVelocity = Vector3.new(0, 0, 0)
-            end
-        end
-
-        if humanoid then
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-            humanoid.PlatformStand = false
-        end
-
-        if rootPart then
-            local rayOrigin = rootPart.Position
-            local rayDirection = Vector3.new(0, -50, 0)
-            local raycastParams = RaycastParams.new()
-            raycastParams.FilterDescendantsInstances = {character}
-            raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-            local raycastResult = Workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-
-            if raycastResult then
-                rootPart.CFrame = CFrame.new(raycastResult.Position + Vector3.new(0, 3, 0))
-                print("Personagem reposicionado acima do chão após desativar o Noclip!")
-            else
-                rootPart.CFrame = CFrame.new(rootPart.Position + Vector3.new(0, 10, 0))
-                print("Chão não encontrado, personagem movido para uma posição segura!")
-            end
-        end
-
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
+    -- Atualização segura das partes
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = not state
+            if state then
                 part.Anchored = false
             end
         end
+    end
 
-        print("Noclip desativado! Comportamento normal restaurado.")
+    -- Controle de estados do humanoid
+    humanoid.PlatformStand = false
+    humanoid:ChangeState(Enum.HumanoidStateType.Running)
+end
+
+-- Sistema anti-void melhorado
+local function antiVoidSystem(rootPart)
+    if rootPart.Position.Y < -500 then
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+        
+        local rayResult = Workspace:Raycast(
+            rootPart.Position,
+            Vector3.new(0, 1000, 0),
+            raycastParams
+        )
+        
+        if rayResult then
+            rootPart.CFrame = CFrame.new(rayResult.Position + Vector33.new(0, 5, 0))
+        else
+            rootPart.CFrame = CFrame.new(0, 100, 0)
+        end
     end
 end
 
--- Garante que o noclip comece desativado ao carregar o hub
-setNoclip(false)
+-- Controle centralizado do loop principal
+local function noclipHeartbeat()
+    if NoclipManager.HeartbeatConnection then
+        NoclipManager.HeartbeatConnection:Disconnect()
+    end
 
--- Toggle personalizado com AddToggle (substituto do antigo)
-local Toggle1 = Tab2:AddToggle({ 
-    Name = "Noclip",
-    Description = "Ativa ou desativa o Noclip para atravessar objetos.",
-    Default = false 
-})
+    NoclipManager.HeartbeatConnection = RunService.Heartbeat:Connect(function()
+        local character = LocalPlayer.Character
+        if not character or character ~= NoclipManager.CurrentCharacter then return end
+        
+        manageCollisions(character, NoclipManager.Enabled)
+        
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            antiVoidSystem(rootPart)
+        end
+    end)
+end
 
-Toggle1:Callback(function(value)
-    setNoclip(value)
-end)
+-- Sistema de reinicialização no respawn
+local function handleNewCharacter(character)
+    NoclipManager.CurrentCharacter = character
+    
+    local humanoid = character:WaitForChild("Humanoid", 2)
+    local rootPart = character:WaitForChild("HumanoidRootPart", 2)
+    
+    if not humanoid or not rootPart then
+        warn("[NOCLIP] Falha ao detectar novo personagem!")
+        return
+    end
 
--- Reaplica o noclip após o respawn, se estiver ativado
-LocalPlayer.CharacterAdded:Connect(function(character)
-    if noclipEnabled then
-        local humanoid = character:WaitForChild("Humanoid", 5)
-        local rootPart = character:WaitForChild("HumanoidRootPart", 5)
-        if humanoid and rootPart then
-            task.wait(0.2)
-            setNoclip(true)
-            print("Noclip reaplicado após respawn!")
-        else
-            print("Humanoid ou RootPart não encontrado ao reaplicar Noclip após respawn!")
+    if NoclipManager.Enabled then
+        task.wait(0.5) -- Espera pela estabilização do personagem
+        manageCollisions(character, true)
+        noclipHeartbeat()
+    end
+end
+
+-- Controle do toggle principal
+local function setNoclip(state)
+    NoclipManager.Enabled = state
+    
+    if state then
+        local character = LocalPlayer.Character
+        if character then
+            NoclipManager.CurrentCharacter = character
+            manageCollisions(character, true)
+            noclipHeartbeat()
+            
+            -- Conecta os listeners de character
+            NoclipManager.CharAddedConnection = LocalPlayer.CharacterAdded:Connect(handleNewCharacter)
+            NoclipManager.CharRemovingConnection = LocalPlayer.CharacterRemoving:Connect(function(c)
+                if c == NoclipManager.CurrentCharacter then
+                    manageCollisions(c, false)
+                end
+            end)
+        end
+    else
+        -- Limpeza completa
+        if NoclipManager.HeartbeatConnection then
+            NoclipManager.HeartbeatConnection:Disconnect()
+        end
+        if NoclipManager.CharAddedConnection then
+            NoclipManager.CharAddedConnection:Disconnect()
+        end
+        if NoclipManager.CharRemovingConnection then
+            NoclipManager.CharRemovingConnection:Disconnect()
+        end
+        
+        if NoclipManager.CurrentCharacter then
+            manageCollisions(NoclipManager.CurrentCharacter, false)
         end
     end
+end
+
+-- Configuração inicial
+LocalPlayer.CharacterAdded:Connect(handleNewCharacter)
+if LocalPlayer.Character then
+    handleNewCharacter(LocalPlayer.Character)
+end
+
+-- Cria o toggle na interface
+local Toggle1 = Tab2:AddToggle({
+    Name = "Noclip Avançado",
+    Description = "Versão otimizada com anti-bugs",
+    Default = false
+})
+
+Toggle1:Callback(function(state)
+    setNoclip(state)
+    print("Noclip:", state and "ATIVADO" or "DESATIVADO")
 end)
 
 -------------------------------------------------------------------------------
