@@ -392,92 +392,137 @@ Tab2:AddSlider({
     end
  })
 
- local SoccerBallManager = {
-    ActiveBalls = {},
-    CollisionEnabled = false,
-    Connection = nil
+ local UltimateNoclip = {
+    Enabled = false,
+    Connections = {},
+    SoccerBalls = {}
 }
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
 
--- Função principal para modificar as colisões
-local function setBallCollision(ball, state)
-    if not ball or not ball.Parent then return end
+-- Função para controle de colisões do jogador
+local function managePlayerCollisions(character)
+    if not character then return end
     
-    -- Aplica as propriedades usando o método Set da sua UI library
-    pcall(function()
-        ball:Set("CanCollide", state)
-        ball:Set("Anchored", not state)
-        ball:Set("CollisionGroup", state and "Default" or "NoCollision")
-    end)
-    
-    -- Atualiza a tabela de controle
-    SoccerBallManager.ActiveBalls[ball] = state
-end
-
--- Encontra e processa as bolas existentes
-local function processExistingBalls()
-    local soccerFolder = Workspace:FindFirstChild("Com", true)
-                      and Workspace.Com:FindFirstChild("001_SoccerBalls")
-    
-    if soccerFolder then
-        for _, child in ipairs(soccerFolder:GetChildren()) do
-            if child.Name:match("^Soccer") then
-                setBallCollision(child, SoccerBallManager.CollisionEnabled)
-            end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = not UltimateNoclip.Enabled
+            part.Anchored = false
         end
     end
 end
 
--- Monitora novas bolas criadas
-local function monitorNewBalls()
+-- Sistema anti-void melhorado
+local function voidProtection(rootPart)
+    if rootPart.Position.Y < -500 then
+        local safeCFrame = CFrame.new(0, 100, 0)
+        local rayParams = RaycastParams.new()
+        rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
+        
+        local result = Workspace:Raycast(rootPart.Position, Vector3.new(0, 500, 0), rayParams)
+        rootPart.CFrame = result and CFrame.new(result.Position + Vector3.new(0, 5, 0)) or safeCFrame
+    end
+end
+
+-- Controle das bolas de futebol
+local function manageSoccerBalls()
     local soccerFolder = Workspace:FindFirstChild("Com", true)
                       and Workspace.Com:FindFirstChild("001_SoccerBalls")
     
     if soccerFolder then
-        SoccerBallManager.Connection = soccerFolder.ChildAdded:Connect(function(child)
-            if child.Name:match("^Soccer") then
-                task.wait(0.5) -- Espera a inicialização completa
-                setBallCollision(child, SoccerBallManager.CollisionEnabled)
+        -- Atualiza bolas existentes
+        for _, ball in ipairs(soccerFolder:GetChildren()) do
+            if ball.Name:match("^Soccer") then
+                pcall(function()
+                    ball.CanCollide = not UltimateNoclip.Enabled
+                    ball.Anchored = UltimateNoclip.Enabled
+                end)
+                UltimateNoclip.SoccerBalls[ball] = true
             end
-        end)
+        end
+        
+        -- Monitora novas bolas
+        if not UltimateNoclip.Connections.BallAdded then
+            UltimateNoclip.Connections.BallAdded = soccerFolder.ChildAdded:Connect(function(ball)
+                if ball.Name:match("^Soccer") then
+                    task.wait(0.3)
+                    pcall(function()
+                        ball.CanCollide = not UltimateNoclip.Enabled
+                        ball.Anchored = UltimateNoclip.Enabled
+                    end)
+                end
+            end)
+        end
     end
 end
 
--- Sistema de toggle para controle via UI
-local Toggle2 = Tab2:AddToggle({
-    Name = "Colisão das Bolas",
-    Description = "Ativa/desativa colisão com bolas de futebol",
+-- Loop principal do sistema
+local function mainLoop()
+    UltimateNoclip.Connections.Heartbeat = RunService.Heartbeat:Connect(function()
+        local character = LocalPlayer.Character
+        
+        -- Controle do jogador
+        if character then
+            managePlayerCollisions(character)
+            
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                voidProtection(rootPart)
+            end
+        end
+        
+        -- Atualiza bolas a cada 2 segundos
+        if tick() % 2 < 0.1 then
+            manageSoccerBalls()
+        end
+    end)
+end
+
+-- Configuração do toggle
+local NoclipToggle = Tab2:AddToggle({
+    Name = "Ultimate Noclip",
+    Description = "Noclip + Controle de bolas integrado",
     Default = false
 })
 
-Toggle2:Callback(function(state)
-    SoccerBallManager.CollisionEnabled = state
+NoclipToggle:Callback(function(state)
+    UltimateNoclip.Enabled = state
     
-    -- Processa todas as bolas existentes
-    processExistingBalls()
-    
-    -- Inicia/para o monitoramento
     if state then
-        monitorNewBalls()
+        -- Inicia sistemas
+        mainLoop()
+        manageSoccerBalls()
+        
+        -- Configura respawn
+        UltimateNoclip.Connections.CharAdded = LocalPlayer.CharacterAdded:Connect(function()
+            task.wait(0.5)
+            managePlayerCollisions(LocalPlayer.Character)
+        end)
     else
-        if SoccerBallManager.Connection then
-            SoccerBallManager.Connection:Disconnect()
+        -- Desativa tudo
+        for _, conn in pairs(UltimateNoclip.Connections) do
+            conn:Disconnect()
+        end
+        
+        -- Restaura colisões
+        if LocalPlayer.Character then
+            managePlayerCollisions(LocalPlayer.Character)
+        end
+        
+        -- Restaura bolas
+        for ball in pairs(UltimateNoclip.SoccerBalls) do
+            if ball.Parent then
+                pcall(function()
+                    ball.CanCollide = true
+                    ball.Anchored = false
+                end)
+            end
         end
     end
-    
-    print("Colisão das bolas:", state and "ATIVADA" or "DESATIVADA")
 end)
-
--- Atualiza colisões ao respawnar
-game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
-    if SoccerBallManager.CollisionEnabled then
-        task.wait(1) -- Espera o personagem carregar
-        processExistingBalls()
-    end
-end)
-
 -------------------------------------------------------------------------------
 -- Toggle para Anti-Sit
 local antiSitConnection = nil
