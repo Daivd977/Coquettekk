@@ -1040,8 +1040,155 @@ Tab3:AddButton({
 })
 
 -------------------------------------------------------------------------------------------------------------------------
+local Section = Tab3:AddSection({"Avatar Editor"})
+-- Botão para equipar partes do corpo
 
+Tab3:AddParagraph({
+    Title = "aviso vai resetar seu avatar",
+    Content = ""
+})
 
+-- Cria um botão para equipar todas as partes do corpo
+Tab3:AddButton({
+    Name = "Mini REPO",
+    Callback = function()
+        local args = {
+            {
+                117101023704825, -- Perna Direita
+                125767940563838,  -- Perna Esquerda
+                137301494386930,  -- Braço Direito
+                87357384184710,  -- Braço Esquerdo
+                133391239416999, -- Torso
+                111818794467824   -- Cabeça
+            }
+        }
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Remotes")
+            :WaitForChild("ChangeCharacterBody")
+            :InvokeServer(unpack(args))
+        print("Todas as partes do corpo equipadas!")
+    end
+})
+
+---------------------------------------------------------------------------------------------------
+
+Tab3:AddButton({
+    Name = "mini garanhao",
+    Callback = function()
+        local args = {
+            {
+                124355047456535, -- Perna Direita
+                120507500641962,  -- Perna Esquerda
+                82273782655463,  -- Braço Direito
+                113625313757230,  -- Braço Esquerdo
+                109182039511426, -- Torso
+                0   -- Cabeça
+            }
+        }
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Remotes")
+            :WaitForChild("ChangeCharacterBody")
+            :InvokeServer(unpack(args))
+        print("Todas as partes do corpo equipadas!")
+    end
+})
+
+---------------------------------------------------------------------------------------------------
+
+Tab3:AddButton({
+    Name = "stick",
+    Callback = function()
+        local args = {
+            {
+                14731384498, -- Perna Direita
+                14731377938,  -- Perna Esquerda
+                14731377894,  -- Braço Direito
+                14731377875,  -- Braço Esquerdo
+                14731377941, -- Torso
+                14731382899   -- Cabeça
+            }
+        }
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Remotes")
+            :WaitForChild("ChangeCharacterBody")
+            :InvokeServer(unpack(args))
+        print("Todas as partes do corpo equipadas!")
+    end
+})
+
+---------------------------------------------------------------------------------------------------
+
+Tab3:AddButton({
+    Name = "Chunky-Bug",
+    Callback = function()
+        local args = {
+            {
+                15527827600, -- Perna Direita
+                15527827578,  -- Perna Esquerda
+                15527831669,  -- Braço Direito
+                15527836067,  -- Braço Esquerdo
+                15527827184, -- Torso
+                15527827599   -- Cabeça
+            }
+        }
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Remotes")
+            :WaitForChild("ChangeCharacterBody")
+            :InvokeServer(unpack(args))
+        print("Todas as partes do corpo equipadas!")
+    end
+})
+
+---------------------------------------------------------------------------------------------------
+
+Tab3:AddButton({
+    Name = "Cursed-Spider",
+    Callback = function()
+        local args = {
+            {
+                134555168634906, -- Perna Direita
+                100269043793774,  -- Perna Esquerda
+                125607053187319,  -- Braço Direito
+                122504853343598,  -- Braço Esquerdo
+                95907982259204, -- Torso
+                91289185840375   -- Cabeça
+            }
+        }
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Remotes")
+            :WaitForChild("ChangeCharacterBody")
+            :InvokeServer(unpack(args))
+        print("Todas as partes do corpo equipadas!")
+    end
+})
+
+---------------------------------------------------------------------------------------------------
+
+Tab3:AddButton({
+    Name = "Possessed-Horror",
+    Callback = function()
+        local args = {
+            {
+                122800511983371, -- Perna Direita
+                132465361516275,  -- Perna Esquerda
+                125155800236527,  -- Braço Direito
+                83070163355072,  -- Braço Esquerdo
+                102906187256945, -- Torso
+                78311422507297   -- Cabeça
+            }
+        }
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Remotes")
+            :WaitForChild("ChangeCharacterBody")
+            :InvokeServer(unpack(args))
+        print("Todas as partes do corpo equipadas!")
+    end
+})
+
+Tab3:AddParagraph({
+    Title = "vai ter mais coisas aqui na proxima atualizaçao",
+    Content = ""
+})
 
 ---------------------------------------------------------------------------------------------------------------------------------
                                           -- === Tab4: House === --
@@ -4545,6 +4692,7 @@ ToggleLagExtintor:Callback(function(Value)
     end
 end)
 
+
 -- CELULAR
 local destinoCelular = Vector3.new(-139.95, 20.57, 250.49)
 local lagLoopCelularAtivo = false
@@ -4572,6 +4720,67 @@ local function encontrarCelular()
     end
     return nil
 end
+
+-- BOMBA
+local destinoBomba = Vector3.new(-141.42, -29.97, 243.20)
+local lagLoopBombaAtivo = false
+local loopConexaoBomba = nillocal function encontrarBomba()
+    local workspaceCom = workspace:FindFirstChild("WorkspaceCom")
+    if workspaceCom then
+        local criminalWeapons = workspaceCom:FindFirstChild("001_CriminalWeapons")
+        if criminalWeapons then
+            local giveTools = criminalWeapons:FindFirstChild("GiveTools")
+            if giveTools then
+                local bomba = giveTools:FindFirstChild("Bomb")
+                if bomba and bomba:FindFirstChild("ClickDetector") then
+                    return bomba
+                end
+            end
+        end
+    end
+    return nil
+end
+local ToggleLagBomba = Tab10:AddToggle({
+    Name = "💣 Lag Server Bomba",
+    Description = "Faz spam de bombas para travar o servidor",
+    Default = false
+})
+
+ToggleLagBomba:Callback(function(Value)
+    lagLoopBombaAtivo = Value
+    if lagLoopBombaAtivo then
+        local bombaObjeto = encontrarBomba()
+        if not bombaObjeto then
+            lagLoopBombaAtivo = false
+            ToggleLagBomba:Set(false)
+            return
+        end
+        loopConexaoBomba = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then
+                char = LocalPlayer.CharacterAdded:Wait()
+            end
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(destinoBomba)
+            end
+            bombaObjeto = encontrarBomba()
+            if bombaObjeto and bombaObjeto:FindFirstChild("ClickDetector") then
+                pcall(function()
+                    fireclickdetector(bombaObjeto.ClickDetector)
+                end)
+            end
+            wait(0.3)
+        end)
+    else
+        if loopConexaoBomba then
+            loopConexaoBomba:Disconnect()
+            loopConexaoBomba = nil
+        end
+    end
+end)
+
+
+
 
 local ToggleLagCelular = Tab10:AddToggle({
     Name = "💾 Lag Server Celular",
@@ -4611,65 +4820,10 @@ ToggleLagCelular:Callback(function(Value)
     end
 end)
 
--- BOMBA
-local destinoBomba = Vector3.new(-141.42, -29.97, 243.20)
-local lagLoopBombaAtivo = false
-local loopConexaoBomba = nil
 
-local function encontrarBomba()
-    local workspaceCom = workspace:FindFirstChild("WorkspaceCom")
-    if workspaceCom then
-        local criminalWeapons = workspaceCom:FindFirstChild("001_CriminalWeapons")
-        if criminalWeapons then
-            local giveTools = criminalWeapons:FindFirstChild("GiveTools")
-            if giveTools then
-                local bomba = giveTools:FindFirstChild("Bomb")
-                if bomba and bomba:FindFirstChild("ClickDetector") then
-                    return bomba
-                end
-            end
-        end
-    end
-    return nil
-end
 
-local ToggleLagBomba = Tab10:AddToggle({
-    Name = "💣 Lag Server Bomba",
-    Description = "Faz spam de bombas para travar o servidor",
-    Default = false
-})
-ToggleLagBomba:Callback(function(Value)
-    lagLoopBombaAtivo = Value
-    if lagLoopBombaAtivo then
-        local bombaObjeto = encontrarBomba()
-        if not bombaObjeto then
-            lagLoopBombaAtivo = false
-            ToggleLagBomba:Set(false)
-            return
-        end
-        loopConexaoBomba = RunService.Heartbeat:Connect(function()
-            local char = LocalPlayer.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then
-                char = LocalPlayer.CharacterAdded:Wait()
-            end
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                char.HumanoidRootPart.CFrame = CFrame.new(destinoBomba)
-            end
-            bombaObjeto = encontrarBomba()
-            if bombaObjeto and bombaObjeto:FindFirstChild("ClickDetector") then
-                pcall(function()
-                    fireclickdetector(bombaObjeto.ClickDetector)
-                end)
-            end
-            wait(0.3)
-        end)
-    else
-        if loopConexaoBomba then
-            loopConexaoBomba:Disconnect()
-            loopConexaoBomba = nil
-        end
-    end
-end)
+
+
 
 -- MACA
 local destinoMaca = Vector3.new(-340.68, 3.04, 28.59)
