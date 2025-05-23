@@ -936,6 +936,8 @@ Tab3:AddButton({
 })
 
 ------------------------------------------------------------------------------------------------------------------------------------
+local Section = Tab3:AddSection({"Roupas 3D"})
+
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -958,8 +960,125 @@ end
 AvatarManager.Avatares = {
     { Nome = "Gato de Manga", ID = 124948425515124 },
     { Nome = "Tung Saur", ID = 117098257036480 },
+    { Nome = "Tralaleiro", ID = 99459753608381 },
     { Nome = "Monstro S.A", ID = 123609977175226 },
-    { Nome = "Trenzinho", ID = 80468697076178 }
+    { Nome = "Trenzinho", ID = 80468697076178 },
+    { Nome = "Dino", ID = 11941741105 },
+    { Nome = "Pou idoso", ID = 15742966010  },
+    { Nome = "Coco/boxt@", ID = 77013984520332  },
+    { Nome = "Coelho", ID = 71797333686800  },
+    { Nome = "Hipopótamo", ID = 73215892129281 },
+    { Nome = "Ratatui", ID = 108557570415453 },
+    { Nome = "Galinha", ID = 71251793812515 },
+    { Nome = "Pepa pig", ID = 92979204778377 },
+    { Nome = "pinguin", ID = 94944293759578 },
+    { Nome = "Sid", ID = 87442757321244 },
+    { Nome = "puga grande", ID = 111436158728716 },
+    { Nome = "SHREK AMALDIÇOADO", ID = 120960401202173 },
+    { Nome = "mosquito grande", ID = 108052868536435 },
+    { Nome = "Noob Invertido", ID = 106596990206151 },
+    { Nome = "Pato(a)", ID = 135132836238349 },
+    { Nome = "Cachorro Chihuahua", ID = 18656467256 },
+    { Nome = "Gato sla", ID = 18994959003 },
+    { Nome = "Gato fei ", ID = 77506186615650 },
+    { Nome = "Inpostor", ID = 18234669337 },
+    { Nome = "Simon amarelo", ID = 75183593514657 },
+    { Nome = "Simon azul", ID = 76155710249925 }
+    
+}
+-- Função para obter os nomes dos avatares para o dropdown
+function AvatarManager:GetAvatarNames()
+    local nomes = {}
+    for _, avatar in ipairs(self.Avatares) do
+        table.insert(nomes, avatar.Nome)
+    end
+    return nomes
+end
+
+-- Função para equipar o avatar
+function AvatarManager:EquiparAvatar(avatarName)
+    for _, avatar in ipairs(self.Avatares) do
+        if avatar.Nome == avatarName then
+            local args = { avatar.ID }
+            local success, result = pcall(function()
+                return self.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+            end)
+            if success then
+                self:MostrarNotificacao("Avatar " .. avatarName .. " equipado com sucesso!")
+            else
+                self:MostrarNotificacao("Falha ao equipar o avatar " .. avatarName .. "!")
+            end
+            return
+        end
+    end
+    self:MostrarNotificacao("Avatar " .. avatarName .. " não encontrado!")
+end
+
+-- Tab3: Opção de Avatar
+-- Dropdown para avatares
+local AvatarDropdown = Tab3:AddDropdown({
+    Name = "assesorios 3D",
+    Description = "Selecione  para equipar",
+    Default = nil,
+    Options = AvatarManager:GetAvatarNames(),
+    Callback = function(avatarSelecionado)
+        _G.SelectedAvatar = avatarSelecionado
+    end
+})
+
+-- Botão para equipar avatar
+Tab3:AddButton({
+    Name = "equipar ",
+    Description = "Equipar selecionado",
+    Callback = function()
+        if not _G.SelectedAvatar or _G.SelectedAvatar == "" then
+            AvatarManager:MostrarNotificacao("Nenhum avatar selecionado!")
+            return
+        end
+        AvatarManager:EquiparAvatar(_G.SelectedAvatar)
+    end
+})
+
+-------------------------------------------------------------------------------------------------------------------------
+
+local Section = Tab3:AddSection({"Avatar Editor"})
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Namespace para evitar conflitos
+local AvatarManager = {}
+AvatarManager.ReplicatedStorage = ReplicatedStorage
+
+-- Função para exibir notificação
+function AvatarManager:MostrarNotificacao(mensagem)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aviso",
+            Text = mensagem,
+            Duration = 5
+        })
+    end)
+end
+
+-- Tabela de avatares
+AvatarManager.Avatares = {
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  }
 }
 
 -- Função para obter os nomes dos avatares para o dropdown
@@ -993,8 +1112,8 @@ end
 -- Tab3: Opção de Avatar
 -- Dropdown para avatares
 local AvatarDropdown = Tab3:AddDropdown({
-    Name = "Minecraft",
-    Description = "Selecione um avatar para equipar",
+    Name = "perna direita",
+    Description = "Selecione para equipar",
     Default = nil,
     Options = AvatarManager:GetAvatarNames(),
     Callback = function(avatarSelecionado)
@@ -1004,8 +1123,101 @@ local AvatarDropdown = Tab3:AddDropdown({
 
 -- Botão para equipar avatar
 Tab3:AddButton({
-    Name = "Equipar roupa 3D",
-    Description = "Equipa a roupa selecionada",
+    Name = "Equipar ",
+    Description = "",
+    Callback = function()
+        if not _G.SelectedAvatar or _G.SelectedAvatar == "" then
+            AvatarManager:MostrarNotificacao("Nenhum avatar selecionado!")
+            return
+        end
+        AvatarManager:EquiparAvatar(_G.SelectedAvatar)
+    end
+})
+
+
+--------------------------------------------------------------------------------------------------------------
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Namespace para evitar conflitos
+local AvatarManager = {}
+AvatarManager.ReplicatedStorage = ReplicatedStorage
+
+-- Função para exibir notificação
+function AvatarManager:MostrarNotificacao(mensagem)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aviso",
+            Text = mensagem,
+            Duration = 5
+        })
+    end)
+end
+
+-- Tabela de avatares
+AvatarManager.Avatares = {
+    { Nome = "", ID =   },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  }
+}
+
+-- Função para obter os nomes dos avatares para o dropdown
+function AvatarManager:GetAvatarNames()
+    local nomes = {}
+    for _, avatar in ipairs(self.Avatares) do
+        table.insert(nomes, avatar.Nome)
+    end
+    return nomes
+end
+
+-- Função para equipar o avatar
+function AvatarManager:EquiparAvatar(avatarName)
+    for _, avatar in ipairs(self.Avatares) do
+        if avatar.Nome == avatarName then
+            local args = { avatar.ID }
+            local success, result = pcall(function()
+                return self.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+            end)
+            if success then
+                self:MostrarNotificacao("Avatar " .. avatarName .. " equipado com sucesso!")
+            else
+                self:MostrarNotificacao("Falha ao equipar o avatar " .. avatarName .. "!")
+            end
+            return
+        end
+    end
+    self:MostrarNotificacao("Avatar " .. avatarName .. " não encontrado!")
+end
+
+-- Tab3: Opção de Avatar
+-- Dropdown para avatares
+local AvatarDropdown = Tab3:AddDropdown({
+    Name = "perna esquerda",
+    Description = "Selecione para equipar",
+    Default = nil,
+    Options = AvatarManager:GetAvatarNames(),
+    Callback = function(avatarSelecionado)
+        _G.SelectedAvatar = avatarSelecionado
+    end
+})
+
+-- Botão para equipar avatar
+Tab3:AddButton({
+    Name = "Equipar ",
+    Description = "",
     Callback = function()
         if not _G.SelectedAvatar or _G.SelectedAvatar == "" then
             AvatarManager:MostrarNotificacao("Nenhum avatar selecionado!")
@@ -1017,6 +1229,384 @@ Tab3:AddButton({
 
 
 
+
+
+--------------------------------------------------------------------------------------------------------------
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Namespace para evitar conflitos
+local AvatarManager = {}
+AvatarManager.ReplicatedStorage = ReplicatedStorage
+
+-- Função para exibir notificação
+function AvatarManager:MostrarNotificacao(mensagem)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aviso",
+            Text = mensagem,
+            Duration = 5
+        })
+    end)
+end
+
+-- Tabela de avatares
+AvatarManager.Avatares = {
+    { Nome = "", ID =   },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  }
+}
+
+-- Função para obter os nomes dos avatares para o dropdown
+function AvatarManager:GetAvatarNames()
+    local nomes = {}
+    for _, avatar in ipairs(self.Avatares) do
+        table.insert(nomes, avatar.Nome)
+    end
+    return nomes
+end
+
+-- Função para equipar o avatar
+function AvatarManager:EquiparAvatar(avatarName)
+    for _, avatar in ipairs(self.Avatares) do
+        if avatar.Nome == avatarName then
+            local args = { avatar.ID }
+            local success, result = pcall(function()
+                return self.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+            end)
+            if success then
+                self:MostrarNotificacao("Avatar " .. avatarName .. " equipado com sucesso!")
+            else
+                self:MostrarNotificacao("Falha ao equipar o avatar " .. avatarName .. "!")
+            end
+            return
+        end
+    end
+    self:MostrarNotificacao("Avatar " .. avatarName .. " não encontrado!")
+end
+
+-- Tab3: Opção de Avatar
+-- Dropdown para avatares
+local AvatarDropdown = Tab3:AddDropdown({
+    Name = "braço direito",
+    Description = "Selecione para equipar",
+    Default = nil,
+    Options = AvatarManager:GetAvatarNames(),
+    Callback = function(avatarSelecionado)
+        _G.SelectedAvatar = avatarSelecionado
+    end
+})
+
+-- Botão para equipar avatar
+Tab3:AddButton({
+    Name = "Equipar ",
+    Description = "",
+    Callback = function()
+        if not _G.SelectedAvatar or _G.SelectedAvatar == "" then
+            AvatarManager:MostrarNotificacao("Nenhum avatar selecionado!")
+            return
+        end
+        AvatarManager:EquiparAvatar(_G.SelectedAvatar)
+    end
+})
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Namespace para evitar conflitos
+local AvatarManager = {}
+AvatarManager.ReplicatedStorage = ReplicatedStorage
+
+-- Função para exibir notificação
+function AvatarManager:MostrarNotificacao(mensagem)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aviso",
+            Text = mensagem,
+            Duration = 5
+        })
+    end)
+end
+
+-- Tabela de avatares
+AvatarManager.Avatares = {
+    { Nome = "", ID =   },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  }
+}
+
+-- Função para obter os nomes dos avatares para o dropdown
+function AvatarManager:GetAvatarNames()
+    local nomes = {}
+    for _, avatar in ipairs(self.Avatares) do
+        table.insert(nomes, avatar.Nome)
+    end
+    return nomes
+end
+
+-- Função para equipar o avatar
+function AvatarManager:EquiparAvatar(avatarName)
+    for _, avatar in ipairs(self.Avatares) do
+        if avatar.Nome == avatarName then
+            local args = { avatar.ID }
+            local success, result = pcall(function()
+                return self.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+            end)
+            if success then
+                self:MostrarNotificacao("Avatar " .. avatarName .. " equipado com sucesso!")
+            else
+                self:MostrarNotificacao("Falha ao equipar o avatar " .. avatarName .. "!")
+            end
+            return
+        end
+    end
+    self:MostrarNotificacao("Avatar " .. avatarName .. " não encontrado!")
+end
+
+-- Tab3: Opção de Avatar
+-- Dropdown para avatares
+local AvatarDropdown = Tab3:AddDropdown({
+    Name = "braço esquerdo",
+    Description = "Selecione para equipar",
+    Default = nil,
+    Options = AvatarManager:GetAvatarNames(),
+    Callback = function(avatarSelecionado)
+        _G.SelectedAvatar = avatarSelecionado
+    end
+})
+
+-- Botão para equipar avatar
+Tab3:AddButton({
+    Name = "Equipar ",
+    Description = "",
+    Callback = function()
+        if not _G.SelectedAvatar or _G.SelectedAvatar == "" then
+            AvatarManager:MostrarNotificacao("Nenhum avatar selecionado!")
+            return
+        end
+        AvatarManager:EquiparAvatar(_G.SelectedAvatar)
+    end
+})
+
+--------------------------------------------------------------------------------------------------------------
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Namespace para evitar conflitos
+local AvatarManager = {}
+AvatarManager.ReplicatedStorage = ReplicatedStorage
+
+-- Função para exibir notificação
+function AvatarManager:MostrarNotificacao(mensagem)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aviso",
+            Text = mensagem,
+            Duration = 5
+        })
+    end)
+end
+
+-- Tabela de avatares
+AvatarManager.Avatares = {
+    { Nome = "", ID =   },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  }
+}
+
+-- Função para obter os nomes dos avatares para o dropdown
+function AvatarManager:GetAvatarNames()
+    local nomes = {}
+    for _, avatar in ipairs(self.Avatares) do
+        table.insert(nomes, avatar.Nome)
+    end
+    return nomes
+end
+
+-- Função para equipar o avatar
+function AvatarManager:EquiparAvatar(avatarName)
+    for _, avatar in ipairs(self.Avatares) do
+        if avatar.Nome == avatarName then
+            local args = { avatar.ID }
+            local success, result = pcall(function()
+                return self.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+            end)
+            if success then
+                self:MostrarNotificacao("Avatar " .. avatarName .. " equipado com sucesso!")
+            else
+                self:MostrarNotificacao("Falha ao equipar o avatar " .. avatarName .. "!")
+            end
+            return
+        end
+    end
+    self:MostrarNotificacao("Avatar " .. avatarName .. " não encontrado!")
+end
+
+-- Tab3: Opção de Avatar
+-- Dropdown para avatares
+local AvatarDropdown = Tab3:AddDropdown({
+    Name = "Torso",
+    Description = "Selecione para equipar",
+    Default = nil,
+    Options = AvatarManager:GetAvatarNames(),
+    Callback = function(avatarSelecionado)
+        _G.SelectedAvatar = avatarSelecionado
+    end
+})
+
+-- Botão para equipar avatar
+Tab3:AddButton({
+    Name = "Equipar ",
+    Description = "",
+    Callback = function()
+        if not _G.SelectedAvatar or _G.SelectedAvatar == "" then
+            AvatarManager:MostrarNotificacao("Nenhum avatar selecionado!")
+            return
+        end
+        AvatarManager:EquiparAvatar(_G.SelectedAvatar)
+    end
+})
+
+
+--------------------------------------------------------------------------------------------------------------
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Namespace para evitar conflitos
+local AvatarManager = {}
+AvatarManager.ReplicatedStorage = ReplicatedStorage
+
+-- Função para exibir notificação
+function AvatarManager:MostrarNotificacao(mensagem)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aviso",
+            Text = mensagem,
+            Duration = 5
+        })
+    end)
+end
+
+-- Tabela de avatares
+AvatarManager.Avatares = {
+    { Nome = "", ID =   },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  },
+    { Nome = "", ID =  }
+}
+
+-- Função para obter os nomes dos avatares para o dropdown
+function AvatarManager:GetAvatarNames()
+    local nomes = {}
+    for _, avatar in ipairs(self.Avatares) do
+        table.insert(nomes, avatar.Nome)
+    end
+    return nomes
+end
+
+-- Função para equipar o avatar
+function AvatarManager:EquiparAvatar(avatarName)
+    for _, avatar in ipairs(self.Avatares) do
+        if avatar.Nome == avatarName then
+            local args = { avatar.ID }
+            local success, result = pcall(function()
+                return self.ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear"):InvokeServer(unpack(args))
+            end)
+            if success then
+                self:MostrarNotificacao("Avatar " .. avatarName .. " equipado com sucesso!")
+            else
+                self:MostrarNotificacao("Falha ao equipar o avatar " .. avatarName .. "!")
+            end
+            return
+        end
+    end
+    self:MostrarNotificacao("Avatar " .. avatarName .. " não encontrado!")
+end
+
+-- Tab3: Opção de Avatar
+-- Dropdown para avatares
+local AvatarDropdown = Tab3:AddDropdown({
+    Name = "Cabeça",
+    Description = "Selecione para equipar",
+    Default = nil,
+    Options = AvatarManager:GetAvatarNames(),
+    Callback = function(avatarSelecionado)
+        _G.SelectedAvatar = avatarSelecionado
+    end
+})
+
+-- Botão para equipar avatar
+Tab3:AddButton({
+    Name = "Equipar ",
+    Description = "",
+    Callback = function()
+        if not _G.SelectedAvatar or _G.SelectedAvatar == "" then
+            AvatarManager:MostrarNotificacao("Nenhum avatar selecionado!")
+            return
+        end
+        AvatarManager:EquiparAvatar(_G.SelectedAvatar)
+    end
+})
 
 ---------------------------------------------------------------------------------------------------------------------------------
                                           -- === Tab4: House === --
