@@ -15,8 +15,24 @@ local Window = redzlib:MakeWindow({
 local Tab1 = Window:MakeTab({"Credits", "info"})
 
 
--- Adicionar seção de personalização da UI
-local CustomizeSection = Tab1:AddSection({"Personalização da UI"})
+-- Inicializar redzlib.UIElements se não existir
+redzlib.UIElements = redzlib.UIElements or {}
+
+-- Função auxiliar para coletar elementos da UI
+local function CollectUIElements()
+    local playerGui = game.Players.LocalPlayer.PlayerGui
+    local screenGui = playerGui:FindFirstChild("ScreenGui") -- Ajuste para o nome do seu ScreenGui
+    if screenGui then
+        for _, element in pairs(screenGui:GetDescendants()) do
+            if element:IsA("GuiObject") then
+                table.insert(redzlib.UIElements, element)
+            end
+        end
+    end
+end
+
+-- Coletar elementos da UI no início
+CollectUIElements()
 
 -- Função auxiliar para aplicar tema
 local function ApplyTheme(theme)
@@ -29,7 +45,9 @@ local function ApplyTheme(theme)
     for _, uiElement in pairs(redzlib.UIElements) do
         if uiElement:IsA("GuiObject") then
             uiElement.BackgroundColor3 = settings.BackgroundColor
-            uiElement.TextColor3 = settings.TextColor
+            if uiElement:IsA("TextLabel") or uiElement:IsA("TextButton") or uiElement:IsA("TextBox") then
+                uiElement.TextColor3 = settings.TextColor
+            end
             if uiElement:IsA("Frame") or uiElement:IsA("TextButton") then
                 uiElement.BorderColor3 = settings.BorderColor
             end
@@ -37,19 +55,24 @@ local function ApplyTheme(theme)
     end
 end
 
+-- Adicionar seção de personalização da UI
+local CustomizeSection = Tab1:AddSection({"Personalização da UI"})
+
 -- Dropdown para selecionar tema
 local ThemeDropdown = CustomizeSection:AddDropdown({
     Name = "Tema da UI",
-    Description = "Escolha um <font color='rgb(88, 101, 242)'>tema</font> para a interface",
+    Description = "Escolha um tema para a interface",
     Options = {"Claro", "Escuro", "Neon"},
     Default = "Claro",
     Flag = "ui_theme",
     Callback = function(Value)
-        ApplyTheme(Value)
+        pcall(function()
+            ApplyTheme(Value)
+        end)
     end
 })
 
--- Seletor de cor de fundo (simulado com sliders RGB)
+-- Sliders para cor de fundo (R, G, B)
 CustomizeSection:AddSlider({
     Name = "Cor de Fundo (R)",
     Min = 0,
@@ -57,14 +80,17 @@ CustomizeSection:AddSlider({
     Increase = 1,
     Default = 240,
     Callback = function(Value)
-        for _, uiElement in pairs(redzlib.UIElements) do
-            if uiElement:IsA("GuiObject") then
-                local currentColor = uiElement.BackgroundColor3
-                uiElement.BackgroundColor3 = Color3.fromRGB(Value, currentColor.G * 255, currentColor.B * 255)
+        pcall(function()
+            for _, uiElement in pairs(redzlib.UIElements) do
+                if uiElement:IsA("GuiObject") then
+                    local currentColor = uiElement.BackgroundColor3
+                    uiElement.BackgroundColor3 = Color3.fromRGB(Value, currentColor.G * 255, currentColor.B * 255)
+                end
             end
-        end
+        end)
     end
 })
+
 CustomizeSection:AddSlider({
     Name = "Cor de Fundo (G)",
     Min = 0,
@@ -72,14 +98,17 @@ CustomizeSection:AddSlider({
     Increase = 1,
     Default = 240,
     Callback = function(Value)
-        for _, uiElement in pairs(redzlib.UIElements) do
-            if uiElement:IsA("GuiObject") then
-                local currentColor = uiElement.BackgroundColor3
-                uiElement.BackgroundColor3 = Color3.fromRGB(currentColor.R * 255, Value, currentColor.B * 255)
+        pcall(function()
+            for _, uiElement in pairs(redzlib.UIElements) do
+                if uiElement:IsA("GuiObject") then
+                    local currentColor = uiElement.BackgroundColor3
+                    uiElement.BackgroundColor3 = Color3.fromRGB(currentColor.R * 255, Value, currentColor.B * 255)
+                end
             end
-        end
+        end)
     end
 })
+
 CustomizeSection:AddSlider({
     Name = "Cor de Fundo (B)",
     Min = 0,
@@ -87,12 +116,14 @@ CustomizeSection:AddSlider({
     Increase = 1,
     Default = 240,
     Callback = function(Value)
-        for _, uiElement in pairs(redzlib.UIElements) do
-            if uiElement:IsA("GuiObject") then
-                local currentColor = uiElement.BackgroundColor3
-                uiElement.BackgroundColor3 = Color3.fromRGB(currentColor.R * 255, currentColor.G * 255, Value)
+        pcall(function()
+            for _, uiElement in pairs(redzlib.UIElements) do
+                if uiElement:IsA("GuiObject") then
+                    local currentColor = uiElement.BackgroundColor3
+                    uiElement.BackgroundColor3 = Color3.fromRGB(currentColor.R * 255, currentColor.G * 255, Value)
+                end
             end
-        end
+        end)
     end
 })
 
@@ -104,11 +135,13 @@ CustomizeSection:AddSlider({
     Increase = 0.01,
     Default = 0,
     Callback = function(Value)
-        for _, uiElement in pairs(redzlib.UIElements) do
-            if uiElement:IsA("GuiObject") then
-                uiElement.BackgroundTransparency = Value
+        pcall(function()
+            for _, uiElement in pairs(redzlib.UIElements) do
+                if uiElement:IsA("GuiObject") then
+                    uiElement.BackgroundTransparency = Value
+                end
             end
-        end
+        end)
     end
 })
 
@@ -120,63 +153,67 @@ CustomizeSection:AddSlider({
     Increase = 1,
     Default = 14,
     Callback = function(Value)
-        for _, uiElement in pairs(redzlib.UIElements) do
-            if uiElement:IsA("TextLabel") or uiElement:IsA("TextButton") or uiElement:IsA("TextBox") then
-                uiElement.TextSize = Value
+        pcall(function()
+            for _, uiElement in pairs(redzlib.UIElements) do
+                if uiElement:IsA("TextLabel") or uiElement:IsA("TextButton") or uiElement:IsA("TextBox") then
+                    uiElement.TextSize = Value
+                end
             end
-        end
+        end)
     end
 })
 
 -- Dropdown para estilo de borda
 CustomizeSection:AddDropdown({
     Name = "Estilo de Borda",
-    Description = "Escolha o <font color='rgb(88, 101, 242)'>estilo</font> das bordas",
+    Description = "Escolha o estilo das bordas",
     Options = {"Arredondado", "Quadrado", "Sem Borda"},
     Default = "Arredondado",
     Flag = "ui_border_style",
     Callback = function(Value)
-        local cornerRadius = Value == "Arredondado" and UDim.new(0, 8) or UDim.new(0, 0)
-        for _, uiElement in pairs(redzlib.UIElements) do
-            if uiElement:IsA("Frame") or uiElement:IsA("TextButton") then
-                local uiCorner = uiElement:FindFirstChildOfClass("UICorner") or Instance.new("UICorner")
-                uiCorner.CornerRadius = cornerRadius
-                uiCorner.Parent = uiElement
+        pcall(function()
+            local cornerRadius = Value == "Arredondado" and UDim.new(0, 8) or UDim.new(0, 0)
+            for _, uiElement in pairs(redzlib.UIElements) do
+                if uiElement:IsA("Frame") or uiElement:IsA("TextButton") then
+                    local uiCorner = uiElement:FindFirstChildOfClass("UICorner") or Instance.new("UICorner")
+                    uiCorner.CornerRadius = cornerRadius
+                    uiCorner.Parent = uiElement
+                end
+                if Value == "Sem Borda" then
+                    uiElement.BorderSizePixel = 0
+                else
+                    uiElement.BorderSizePixel = 1
+                end
             end
-            if Value == "Sem Borda" then
-                uiElement.BorderSizePixel = 0
-            else
-                uiElement.BorderSizePixel = 1
-            end
-        end
+        end)
     end
 })
 
 -- Toggle para animações
 CustomizeSection:AddToggle({
     Name = "Animações da UI",
-    Description = "Ativa/desativa <font color='rgb(88, 101, 242)'>animações</font> suaves",
+    Description = "Ativa/desativa animações suaves",
     Default = true,
     Callback = function(Value)
-        redzlib.Flags.EnableUIAnimations = Value
-        -- Lógica de animação pode ser implementada aqui (ex.: TweenService)
-        for _, uiElement in pairs(redzlib.UIElements) do
-            if uiElement:IsA("GuiObject") then
-                if Value then
-                    -- Exemplo: adicionar transição suave ao mudar visibilidade
-                    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-                    local tween = game:GetService("TweenService"):Create(uiElement, tweenInfo, {Transparency = uiElement.BackgroundTransparency})
-                    tween:Play()
-                else
-                    -- Remover animações (alterações instantâneas)
-                    uiElement.Transparency = uiElement.BackgroundTransparency
+        pcall(function()
+            redzlib.Flags.EnableUIAnimations = Value
+            for _, uiElement in pairs(redzlib.UIElements) do
+                if uiElement:IsA("GuiObject") then
+                    if Value then
+                        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+                        local tween = game:GetService("TweenService"):Create(uiElement, tweenInfo, {Transparency = uiElement.BackgroundTransparency})
+                        tween:Play()
+                    else
+                        uiElement.Transparency = uiElement.BackgroundTransparency
+                    end
                 end
             end
-        end
+        end)
     end
 })
 
 -- Inicializar flags
+redzlib.Flags = redzlib.Flags or {}
 redzlib.Flags.EnableUIAnimations = true
 redzlib.Flags.UITheme = "Claro"
 redzlib.Flags.UIBorderStyle = "Arredondado"
