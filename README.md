@@ -1,152 +1,136 @@
--- Coquette Hub 3.6 - Tela de Carregamento Avançada com Verificação
-
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
 local StarterGui = game:GetService("StarterGui")
-local HttpService = game:GetService("HttpService")
+local lp = Players.LocalPlayer
 
-local player = Players.LocalPlayer
-local accountAge = player.AccountAge
-local playerName = player.Name
+-- Função que cria a tela de loading e retorna uma promise
+local function createLoadingScreen()
+    local promise = {}
+    promise.completed = false
+    promise.connection = nil
+    
+    -- Remove GUI antiga se existir
+    pcall(function()
+        if CoreGui:FindFirstChild("LoadingScreen") then
+            CoreGui.LoadingScreen:Destroy()
+        end
+    end)
 
--- Verificação de exploração (básica, client-side)
-local function detectExploit()
-    local found = false
-    local suspicious = {
-        "Dex", "RemoteSpy", "Exploit", "RSpy", "Hydroxide", "ScriptSpy"
-    }
+    -- Cria a UI de carregamento
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "LoadingScreen"
+    gui.IgnoreGuiInset = true
+    gui.ResetOnSpawn = false
+    gui.Parent = CoreGui
+    pcall(function() syn.protect_gui(gui) end)
 
-    for _, v in ipairs(getnilinstances()) do
-        if v:IsA("LocalScript") and v.Name then
-            for _, word in ipairs(suspicious) do
-                if string.find(v.Name, word) then
-                    found = true
-                end
-            end
+    local frame = Instance.new("Frame")
+    frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    frame.BackgroundTransparency = 0.3
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.Parent = gui
+
+    local image = Instance.new("ImageLabel")
+    image.Size = UDim2.new(0, 300, 0, 300)
+    image.Position = UDim2.new(0.5, -150, 0.35, -150)
+    image.BackgroundTransparency = 1
+    image.Image = "rbxassetid://75732220851513"
+    image.Parent = frame
+
+    local nameText = Instance.new("TextLabel")
+    nameText.Size = UDim2.new(1, 0, 0, 40)
+    nameText.Position = UDim2.new(0, 0, 0.65, 0)
+    nameText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameText.TextStrokeTransparency = 0.3
+    nameText.BackgroundTransparency = 1
+    nameText.Font = Enum.Font.FredokaOne
+    nameText.TextScaled = true
+    nameText.Text = "Verificando usuário: "..lp.Name.." (Conta: "..tostring(lp.AccountAge).." dias)"
+    nameText.Parent = frame
+
+    local barBG = Instance.new("Frame")
+    barBG.Size = UDim2.new(0.6, 0, 0.03, 0)
+    barBG.Position = UDim2.new(0.2, 0, 0.8, 0)
+    barBG.BackgroundColor3 = Color3.new(1, 1, 1)
+    barBG.BorderSizePixel = 0
+    barBG.Parent = frame
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(0, 0, 1, 0)
+    bar.BackgroundColor3 = Color3.new(0.7, 0.2, 0.6)
+    bar.BorderSizePixel = 0
+    bar.Parent = barBG
+
+    -- Animação da barra de carregamento
+    local tween = TweenService:Create(
+        bar,
+        TweenInfo.new(4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(1, 0, 1, 0)}
+    )
+    tween:Play()
+
+    -- Função para limpar a UI
+    local function cleanup()
+        if gui then
+            gui:Destroy()
+        end
+        if promise.connection then
+            promise.connection:Disconnect()
         end
     end
 
-    if getrenv then
-        for k, v in pairs(getrenv()) do
-            for _, word in ipairs(suspicious) do
-                if type(k) == "string" and string.find(k, word) then
-                    found = true
-                end
-            end
-        end
-    end
-
-    return found
+    -- Após a barra carregar, faz o fade out e destrói a UI
+    promise.connection = tween.Completed:Connect(function()
+        -- Fade out suave da UI
+        TweenService:Create(frame, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(barBG, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(bar, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(image, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
+        TweenService:Create(nameText, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
+        
+        -- Aguarda o fade out terminar
+        task.delay(1.2, function()
+            -- Toca som de conclusão
+            local sound = Instance.new("Sound")
+            sound.SoundId = "rbxassetid://8486683243"
+            sound.Volume = 0.5
+            sound.PlayOnRemove = true
+            sound.Parent = workspace
+            sound:Destroy()
+            
+            -- Exibe a notificação de boas-vindas
+            StarterGui:SetCore("SendNotification", {
+                Title = "Coquette Hub",
+                Text = "Bem-vindo à Coquette Hub 💖",
+                Duration = 4
+            })
+            
+            -- Marca como concluído e limpa
+            promise.completed = true
+            cleanup()
+        end)
+    end)
+    
+    return promise
 end
 
--- Toca som suave
-local function playSound()
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://9118823105" -- 🎵 som suave de fundo (pode trocar)
-    sound.Volume = 1
-    sound.Looped = false
-    sound.Parent = workspace
-    sound:Play()
-end
-
--- Cria GUI de carregamento
-local screenGui = Instance.new("ScreenGui", game.CoreGui)
-screenGui.Name = "CoquetteLoading"
-screenGui.IgnoreGuiInset = true
-screenGui.ResetOnSpawn = false
-
-pcall(function() syn.protect_gui(screenGui) end)
-
--- Fundo escuro
-local bg = Instance.new("Frame", screenGui)
-bg.BackgroundColor3 = Color3.new(0, 0, 0)
-bg.Size = UDim2.new(1, 0, 1, 0)
-bg.BackgroundTransparency = 1
-bg:TweenTransparency(0, Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 1)
-
--- Imagem de verificação
-local img = Instance.new("ImageLabel", bg)
-img.Size = UDim2.new(0, 250, 0, 250)
-img.Position = UDim2.new(0.5, -125, 0.3, -125)
-img.BackgroundTransparency = 1
-img.Image = "rbxassetid://75732220851513" -- imagem verificação
-
--- Nome do jogador
-local nameText = Instance.new("TextLabel", bg)
-nameText.Size = UDim2.new(0, 300, 0, 50)
-nameText.Position = UDim2.new(0.5, -150, 0.55, 0)
-nameText.BackgroundTransparency = 1
-nameText.Text = "Usuário: " .. playerName
-nameText.TextColor3 = Color3.new(1, 1, 1)
-nameText.Font = Enum.Font.FredokaOne
-nameText.TextScaled = true
-
--- Idade da conta
-local ageText = Instance.new("TextLabel", bg)
-ageText.Size = UDim2.new(0, 300, 0, 50)
-ageText.Position = UDim2.new(0.5, -150, 0.6, 0)
-ageText.BackgroundTransparency = 1
-ageText.Text = "Idade da conta: " .. tostring(accountAge) .. " dias"
-ageText.TextColor3 = Color3.new(1, 1, 1)
-ageText.Font = Enum.Font.FredokaOne
-ageText.TextScaled = true
-
--- Texto carregando
-local loadingText = Instance.new("TextLabel", bg)
-loadingText.Size = UDim2.new(0, 300, 0, 50)
-loadingText.Position = UDim2.new(0.5, -150, 0.7, 0)
-loadingText.BackgroundTransparency = 1
-loadingText.Text = "Carregando..."
-loadingText.TextColor3 = Color3.new(1, 1, 1)
-loadingText.Font = Enum.Font.FredokaOne
-loadingText.TextScaled = true
-
--- Barra de carregamento
-local barBack = Instance.new("Frame", bg)
-barBack.Size = UDim2.new(0, 400, 0, 20)
-barBack.Position = UDim2.new(0.5, -200, 0.8, 0)
-barBack.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-
-local bar = Instance.new("Frame", barBack)
-bar.Size = UDim2.new(0, 0, 1, 0)
-bar.BackgroundColor3 = Color3.new(1, 1, 1)
-
--- Anima barra
-for i = 1, 100 do
-    bar:TweenSize(UDim2.new(i / 100, 0, 1, 0), "Out", "Sine", 0.03)
-    task.wait(0.03)
-end
-
--- Verifica exploits
-if detectExploit() then
-    StarterGui:SetCore("KickMessage", "Você foi removido da experiência por violar os termos de serviço da Coquette Hub e equipe Voldex.")
-    task.wait(1)
-    player:Kick("Detectado uso de ferramentas proibidas.")
-    return
-end
-
--- Remove tela com suavidade
-bg:TweenTransparency(1, Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 2)
-for _, v in pairs(bg:GetDescendants()) do
-    if v:IsA("TextLabel") or v:IsA("ImageLabel") or v:IsA("Frame") then
-        v:TweenTransparency(1, Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 2)
+-- Função para esperar até que a promise seja resolvida
+local function waitForPromise(promise)
+    while not promise.completed do
+        task.wait()
     end
 end
 
-task.wait(2.2)
-screenGui:Destroy()
+-- Uso:
+local loadingPromise = createLoadingScreen()
 
--- ✅ Reproduz som de boas-vindas
-playSound()
+-- Aqui você coloca o código que deve esperar até que o loading termine
+waitForPromise(loadingPromise)
 
--- ✅ Mensagem final
-StarterGui:SetCore("SendNotification", {
-    Title = "Coquette Hub",
-    Text = "Bem-vindo à Coquette Hub 💖",
-    Duration = 4
-})
-
-
+-- SEU CÓDIGO ABAIXO AQUI
+print("Loading completo! Agora executando o resto do script...")
+-- ... resto do seu código ...
 
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
