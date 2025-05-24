@@ -43,7 +43,7 @@ KeyTab:AddButton({"✅ Verificar Key", function()
     if response == trueData then
         print("✅ Key válida!")
         
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Daivd977/Coquettekk/refs/heads/main/README.md"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Daivd977/Deivd999/refs/heads/main/pessal"))()
 
         game.StarterGui:SetCore("SendNotification", {
             Title = "Coquette Hub",
