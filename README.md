@@ -1,22 +1,22 @@
-local KeyGuardLibrary = loadstring(game:HttpGet("https://cdn.keyguardian.org/library/v1.0.0.lua"))()
-local trueData = "783e5055a50444c8bd0e5bc59453de68"
-local falseData = "5da489bfd9334c26a9c5013f1a85d149"
-
-KeyGuardLibrary.Set({
-	publicToken = "de3a1a7a25884f2a94a564f0c23cee6c",
-	privateToken = "3d87829343784d35b8e898ac05e42197",
-	trueData = trueData,
-	falseData = falseData,
-})
-
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
-local key = ""
+-- KeyGuardian Config
+local KeyGuardLibrary = loadstring(game:HttpGet("https://cdn.keyguardian.org/library/v1.0.0.lua"))()
+local trueData = "83bf4edd89dd485382a118f2922766bc"
+local falseData = "7fa5a51db19844a1b896bab0e1a49a08"
 
+KeyGuardLibrary.Set({
+    publicToken = "de3a1a7a25884f2a94a564f0c23cee6c",
+    privateToken = "3d87829343784d35b8e898ac05e42197",
+    trueData = trueData,
+    falseData = falseData,
+})
+
+-- Criar janela principal
 local Window = redzlib:MakeWindow({
     Title = "Coquette Hub 3.6",
     SubTitle = "by Lolytadev 💖",
-    SaveFolder = "CoquetteKey"
+    SaveFolder = "coquette_key",
 })
 
 Window:AddMinimizeButton({
@@ -24,36 +24,52 @@ Window:AddMinimizeButton({
     Corner = { CornerRadius = UDim.new(35, 1) },
 })
 
-local Tab1 = Window:MakeTab({"🔑 Key System", "Validation"})
+-- Aba de Key System
+local KeyTab = Window:MakeTab({"🔑 Key System", "Chave de acesso"})
 
--- Caixa de texto para digitar a key
-Tab1:AddTextBox({
-  Name = "Enter Key",
-  Description = "Paste your access key here.",
-  PlaceholderText = "Ex: ABCD-EFGH-1234",
-  Callback = function(Value)
-    key = Value
-  end
+local key = ""
+
+KeyTab:AddTextBox({
+    Name = "Digite sua Key",
+    Description = "Cole sua key válida aqui",
+    PlaceholderText = "ex: my-key-123",
+    Callback = function(Value)
+        key = Value
+    end
 })
 
--- Botão para checar a key
-Tab1:AddButton({"✅ Check Key", function()
-  local response = KeyGuardLibrary.validateDefaultKey(key)
-  if response == trueData then
-    print("✅ Key is valid!")
-    
+KeyTab:AddButton({"✅ Verificar Key", function()
+    local response = KeyGuardLibrary.validateDefaultKey(key)
+    if response == trueData then
+        print("✅ Key válida!")
+        
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Daivd977/Coquettekk/refs/heads/main/README.md"))()
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Daivd977/Deivd999/refs/heads/main/pessal"))()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Coquette Hub",
+            Text = "Key válida! Acesso liberado!",
+            Duration = 5
+        })
 
+        -- Exemplo de criar nova aba funcional:
+        local MainTab = Window:MakeTab({"🏠 Principal", "Scripts e Funções"})
+        MainTab:AddButton({"Print", function() print("Script liberado!") end})
 
-
-  else
-    warn("❌ Invalid key!")
-  end
+    else
+        print("❌ Key inválida.")
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Erro",
+            Text = "Key inválida, tente novamente!",
+            Duration = 4
+        })
+    end
 end})
 
--- Botão para copiar o link da key
-Tab1:AddButton({"🔗 Get Key Link", function()
-  setclipboard(KeyGuardLibrary.getLink())
-  print("🔗 Key link copied to clipboard!")
+KeyTab:AddButton({"📋 Obter Key", function()
+    setclipboard(KeyGuardLibrary.getLink())
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Link copiado!",
+        Text = "Cole no navegador para obter a key",
+        Duration = 5
+    })
 end})
