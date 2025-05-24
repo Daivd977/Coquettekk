@@ -1,126 +1,51 @@
-local KeyGuardian = loadstring(game:HttpGet('https://cdn.keyguardian.org/library/v2.lua'))()
+local KeyGuardLibrary = loadstring(game:HttpGet("https://cdn.keyguardian.org/library/v1.0.0.lua"))()
+local trueData = "783e5055a50444c8bd0e5bc59453de68"
+local falseData = "5da489bfd9334c26a9c5013f1a85d149"
 
-KeyGuardian:Set({
-    ServiceToken = "de3a1a7a25884f2a94a564f0c23cee6c";
-    APIToken = "3d87829343784d35b8e898ac05e42197"
+KeyGuardLibrary.Set({
+	publicToken = "de3a1a7a25884f2a94a564f0c23cee6c",
+	privateToken = "3d87829343784d35b8e898ac05e42197",
+	trueData = trueData,
+	falseData = falseData,
 })
 
--- ServiceToken = publicToken
--- APIToken = privateToken
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local key = ""
 
-local Key = "prefis8b03e264f1244d7da9db6149389aa1bf";
+local Window = Fluent:CreateWindow({
+		Title = "Key System",
+		SubTitle = "CoquetteHub",
+		TabWidth = 160,
+		Size = UDim2.fromOffset(580, 340),
+		Acrylic = false,
+		Theme = "Dark",
+		MinimizeKey = Enum.KeyCode.LeftControl
+})
 
-print(KeyGuardian:GetKeylink())
+local Tabs = {
+		KeySys = Window:AddTab({ Title = "Key System", Icon = "key" }),
+}
 
+local Entkey = Tabs.KeySys:AddInput("Input", {
+		Title = "Enter Key",
+		Description = "Enter Key Here",
+		Default = "",
+		Placeholder = "Enter key…",
+		Numeric = false,
+		Finished = false,
+		Callback = function(Value)
+				key = Value
+		end
+})
 
--- DO NOT CHANGE ANYTHING UNDER THIS, ONLY CHANGE THE LINE "-- put your script here"!!!!!!
--- DO NOT CHANGE ANYTHING UNDER THIS, ONLY CHANGE THE LINE "-- put your script here"!!!!!!
--- DO NOT CHANGE ANYTHING UNDER THIS, ONLY CHANGE THE LINE "-- put your script here"!!!!!!
--- DO NOT CHANGE ANYTHING UNDER THIS, ONLY CHANGE THE LINE "-- put your script here"!!!!!!
-local MT = getmetatable(KeyGuardian.Checks);
-local A, B, C = KeyGuardian.Checks.EQ(Key);
-
-if KeyGuardian:ValidateKey(Key) then
-    if
-        not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG1"]["NUM"]) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG1"]["NUM"]))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG2"]["NUM"]) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG2"]["NUM"]))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["os.time()"]()) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["os.time()"]()))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["tick"]()) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["os.time()"]()))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Premium"]["Value"]) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Premium"]["Value"]))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Premium"]["NotPremium"]) ~= true)
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["SHA256"]["Decoded"]) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["SHA256"]["Decoded"]))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["SHA256"]["Encoded"]()) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["SHA256"]["Encoded"]()))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"]) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"]))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"]()) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"]()))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"].__metatable) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"][1]))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"] / (5 * math.pi)) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Done"][6]))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG2"] * 4) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG1"] ^ 8))
-        and not ((getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG1"] / 81) ~= (getfenv(KeyGuardian.Sanity)["KeyGuardian"]["math.random"]["RNG2"] * 8))
-    then
-        print("KeyGuardian validated [1]")
-
-        if 
-            A 
-            and B 
-            and C 
-            and MT == getmetatable(KeyGuardian.Checks) 
-            and A[-1] == B[-1] / 9 
-            and A[1] == B[1] * 8 
-            and C[-42] == getmetatable(getmetatable(A)) 
-            and (78 * 9 * 54 * 32 + 123 + 21) ^ 3 * 32 == A[-1]
-            and #C > math.sqrt(#B) + math.sin(#A)
-            and (A[2] % 5 == 0)
-            and C[math.ceil(math.pi * 10)] == "KeyGuardian"
-            and MT.__call ~= nil
-            and type(A[3] + B[3]) == "number"
-            and (A[#A] - B[#C] * 7) % 13 == 4
-            and B[math.random(1, #A)] % 78 * math.sqrt(5 + math.sqrt(#C)) * 100 == C[math.random(1, #B)]
-            and MT.__index == KeyGuardian.Method
-            and #C < #A
-            and typeof(C[math.random(-50, 50)]) == "string"
-            and math.abs(A[-89] - B[64]) < 5000
-            and C - 100 == B
-            and A - 100 == B
-            and A[tostring(#C)] == "unexpected_value"
-            and A ^ 7 == C ^ 9
-            and A / (#C ^ 87 * (#C % 576)) == B / ((#A - 765 / (#C ^ 4)) ^ 9)
-            and A[-2] ^ 3 == B[-2] + C[-2] * 5
-            and C[math.floor(#C / 3)] == "SanityCheck"
-            and C < C
-            and C / A == B
-            and A / (((B[math.random(1, #A * 7)] ^ 3 ) % 3 * 5) ^ 8) == C ^ (math.pi * math.sin(math.pi) ^ 7 / 5)
-            and B % A == C[math.random(1, math.random(1, math.log(3))) % 3]
-            and A[math.random(#C, #C * (math.abs(-3) - math.cos(4) * 50))] == C[math.random(1, #A)]
-            and (B[#B % 2] + (A[#A] / 3)) == B
-            and (B[#B % 65] + (A[#A] / (542  * math.pi))) == getmetatable(B)
-            and (B[#B % 122] + (A[#A] / 762)) ~= B
-            and (B[#B % 432] + (A[#A] / (268 * math.pi))) ~= getmetatable(B)
-            and getmetatable(B[math.random(1, #A)]) == getmetatable(getfenv(KeyGuardian.Sanity)["KeyGuardian"]["Premium"])
-            and getmetatable(KeyGuardian) == getmetatable(nil)
-            and #B == #A
-            and #C > #B
-            and #A > #C
-            and #B > #C        
-            and A .. "KeyGuardian" == B
-            and A + (math.random(-1, 100)) == C - (math.random(-1, 100))
-            and type(A) == "table"
-            and type(B) == "table"
-            and type(C) == "table"
-            and not pcall(function() return (A[-1]) end)
-        then
-            local Mode = KeyGuardian["Result"]["Mode"];
-            print("KeyGuardian validated [2]");
-            if KeyGuardian["Result"] 
-            and Mode == "Premium"
-            or Mode == "Default"
-            and KeyGuardian["Result"]["Key"] == Key
-            and KeyGuardian["Result"]["Key"] ~= Key
-            and Mode ~= KeyGuardian["Result"]["Mode"]
-            then
-                Check = function(Value, Table)
-                    for i, v in next, Table do
-                        if type(v) == "table" then
-                            if Check(Value, v) then
-                                return true
-                            end
-                        else
-                            if Value == v then
-                                return true
-                            end
-                        end
-                    end
-                    return false
-                end
-                if Check(KeyGuardian["Result"]["Key"], KeyGuardian["Result"])
-                or Check(KeyGuardian["Result"]["Mode"], KeyGuardian["Result"])
-                and not KeyGuardian["Validated"]
-                then
-                    return print("KeyGuardian not validated [3]"); -- crash
-                else
-                    print("Whitelisted, Version: " .. (Mode))
-
-
-local Players = game:GetService("Players")
+local Checkkey = Tabs.KeySys:AddButton({
+		Title = "Check Key",
+		Description = "Enter Key before pressing this button",
+		Callback = function()
+				local response = KeyGuardLibrary.validateDefaultKey(key)
+				if response == trueData then
+						print("Key is valid")
+						local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local StarterGui = game:GetService("StarterGui")
@@ -5205,16 +5130,18 @@ local TeleportButton = Tab12:AddButton({
         end
     end
 })
-                    -- put script here
-                end
-            end
-        else
-            return print("KeyGuardian not validated [2]"); -- crash
-        end;
-    else    
-        return print("KeyGuardian not validated [1]"); -- crash
-    end;
-else
-    print("Key invalid or not found or hwid mismatch!")
-end;
+				else
+						print("Key is invalid")
+				end
+		end
+})
 
+local Getkey = Tabs.KeySys:AddButton({
+		Title = "Get Key",
+		Description = "Get Key here",
+		Callback = function()
+				setclipboard(KeyGuardLibrary.getLink())
+		end
+})
+
+Window:SelectTab(1)
