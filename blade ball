@@ -123,7 +123,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6",
+    Title = "Coquette Hub 3.5846857",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -140,25 +140,38 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Ball = nil
+local PlayerFloor = nil
 
--- Função para encontrar a bola dinamicamente
-local function FindBall()
-    local path = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("Border") and workspace.Map.Grassy_Classic.Border:FindFirstChild("BallFloor")
-    if path then
-        Ball = path
-        print("Bola encontrada:", Ball:GetFullName())
+-- Função para encontrar a bola e o PlayerFloor dinamicamente
+local function FindBallAndPlayerFloor()
+    -- Tenta encontrar o PlayerFloor
+    local playerFloorPath = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("PlayerFloor")
+    if playerFloorPath then
+        PlayerFloor = playerFloorPath
+        print("PlayerFloor encontrado:", PlayerFloor:GetFullName())
+    else
+        print("PlayerFloor não encontrado.")
+        PlayerFloor = nil
+    end
+
+    -- Tenta encontrar a bola pelo caminho específico
+    local ballPath = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("Border") and workspace.Map.Grassy_Classic.Border:FindFirstChild("BallFloor")
+    if ballPath then
+        Ball = ballPath
+        print("Bola encontrada (caminho específico):", Ball:GetFullName())
         return true
     else
-        print("Bola não encontrada. Tentando novamente...")
-        Ball = nil
-        -- Tenta encontrar a bola por outros meios
+        print("Bola não encontrada no caminho específico. Buscando de forma genérica...")
+        -- Busca genérica por objetos com "ball" no nome
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj.Name:lower():find("ball") and obj:IsA("BasePart") then
                 Ball = obj
-                print("Bola encontrada (método alternativo):", Ball:GetFullName())
+                print("Bola encontrada (método genérico):", Ball:GetFullName())
                 return true
             end
         end
+        Ball = nil
+        print("Bola não encontrada.")
         return false
     end
 end
@@ -191,7 +204,7 @@ Toggle:Callback(function(Value)
     ToggleEnabled = Value
     if ToggleEnabled then
         print("Auto-Parry ativado! Monitorando a bola...")
-        FindBall()
+        FindBallAndPlayerFloor()
     else
         print("Auto-Parry desativado!")
     end
@@ -204,14 +217,22 @@ local DETECTION_DISTANCE = 15 -- Distância para considerar a bola "perto"
 local function IsBallClose()
     if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
     local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    print("Distância da bola:", distance)
+    print("Distância da bola até o jogador:", distance)
+
+    -- Verifica se o PlayerFloor existe e usa sua posição para ajudar na detecção
+    if PlayerFloor then
+        local distanceToPlayerFloor = (Ball.Position - PlayerFloor.Position).Magnitude
+        print("Distância da bola até o PlayerFloor:", distanceToPlayerFloor)
+        return distance <= DETECTION_DISTANCE or distanceToPlayerFloor <= DETECTION_DISTANCE
+    end
+
     return distance <= DETECTION_DISTANCE
 end
 
--- Loop para tentar encontrar a bola continuamente
+-- Loop para tentar encontrar a bola e o PlayerFloor continuamente
 RunService.Heartbeat:Connect(function()
-    if ToggleEnabled and not Ball then
-        FindBall()
+    if ToggleEnabled and (not Ball or not PlayerFloor) then
+        FindBallAndPlayerFloor()
     end
 end)
 
