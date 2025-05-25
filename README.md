@@ -123,7 +123,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6",
+    Title = "Coquette Hub 3.666",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -151,6 +151,14 @@ local function FindBall()
     else
         print("Bola não encontrada. Tentando novamente...")
         Ball = nil
+        -- Tenta encontrar a bola por outros meios
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name:lower():find("ball") and obj:IsA("BasePart") then
+                Ball = obj
+                print("Bola encontrada (método alternativo):", Ball:GetFullName())
+                return true
+            end
+        end
         return false
     end
 end
@@ -170,144 +178,57 @@ local function PressF()
     print("Tecla F pressionada!")
 end
 
--- Função para spam F
-local function SpamF()
-    print("Iniciando spam de F...")
-    for i = 1, 5 do
-        if not (Toggle1Enabled or Toggle2Enabled or Toggle3Enabled) then break end
-        PressF()
-        wait(0.1)
-    end
-end
+-- Toggle
+local ToggleEnabled = false
 
--- Toggles
-local Toggle1Enabled = false
-local Toggle2Enabled = false
-local Toggle3Enabled = false
-
--- Toggle 1: Auto-Parry baseado em distância e velocidade
-local Toggle1 = Tab1:AddToggle({
-    Name = "Auto-Parry 1",
-    Description = "Baseado em distância e velocidade da bola",
+local Toggle = Tab1:AddToggle({
+    Name = "Auto-Parry",
+    Description = "Ativa o auto-parry para Blade Ball",
     Default = false
 })
 
-Toggle1:Callback(function(Value)
-    Toggle1Enabled = Value
-    if Toggle1Enabled then
-        print("Auto-Parry 1 ativado! Monitorando a bola...")
+Toggle:Callback(function(Value)
+    ToggleEnabled = Value
+    if ToggleEnabled then
+        print("Auto-Parry ativado! Monitorando a bola...")
         FindBall()
     else
-        print("Auto-Parry 1 desativado!")
+        print("Auto-Parry desativado!")
     end
 end)
 
--- Constantes para Toggle 1
-local DETECTION_DISTANCE_1 = 20
-local BALL_SPEED_THRESHOLD_1 = 5
+-- Constantes
+local DETECTION_DISTANCE = 15 -- Distância para considerar a bola "perto"
 
-local function IsBallCloseAndComingToggle1()
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return false, false end
-    local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    local ballVelocity = Ball:FindFirstChild("BodyVelocity") and Ball.BodyVelocity.MaxForce or (Ball.Velocity or Vector3.new(0, 0, 0))
-    local directionToPlayer = (HumanoidRootPart.Position - Ball.Position).Unit
-    local speedTowardsPlayer = ballVelocity:Dot(directionToPlayer)
-    print("Toggle 1 - Distância:", distance, "Velocidade na direção:", speedTowardsPlayer)
-    return distance <= DETECTION_DISTANCE_1, speedTowardsPlayer > BALL_SPEED_THRESHOLD_1
-end
-
--- Toggle 2: Auto-Parry baseado em eventos do jogo
-local Toggle2 = Tab1:AddToggle({
-    Name = "Auto-Parry 2",
-    Description = "Baseado em eventos do jogo",
-    Default = false
-})
-
-Toggle2:Callback(function(Value)
-    Toggle2Enabled = Value
-    if Toggle2Enabled then
-        print("Auto-Parry 2 ativado! Monitorando eventos...")
-        FindBall()
-    else
-        print("Auto-Parry 2 desativado!")
-    end
-end)
-
--- Toggle 2: Lógica baseada em eventos (simplificado, já que não temos eventos específicos)
-local DETECTION_DISTANCE_2 = 15
-local function IsBallCloseToggle2()
+-- Verifica se a bola está perto
+local function IsBallClose()
     if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
     local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    print("Toggle 2 - Distância:", distance)
-    return distance <= DETECTION_DISTANCE_2
-end
-
--- Toggle 3: Auto-Parry baseado apenas em distância
-local Toggle3 = Tab1:AddToggle({
-    Name = "Auto-Parry 3",
-    Description = "Baseado apenas em distância",
-    Default = false
-})
-
-Toggle3:Callback(function(Value)
-    Toggle3Enabled = Value
-    if Toggle3Enabled then
-        print("Auto-Parry 3 ativado! Monitorando a bola...")
-        FindBall()
-    else
-        print("Auto-Parry 3 desativado!")
-    end
-end)
-
--- Constantes para Toggle 3
-local DETECTION_DISTANCE_3 = 25
-
-local function IsBallCloseToggle3()
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
-    local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    print("Toggle 3 - Distância:", distance)
-    return distance <= DETECTION_DISTANCE_3
+    print("Distância da bola:", distance)
+    return distance <= DETECTION_DISTANCE
 end
 
 -- Loop para tentar encontrar a bola continuamente
 RunService.Heartbeat:Connect(function()
-    if (Toggle1Enabled or Toggle2Enabled or Toggle3Enabled) and not Ball then
+    if ToggleEnabled and not Ball then
         FindBall()
     end
 end)
 
--- Loop principal para os toggles
+-- Loop principal para o auto-parry
 RunService.Heartbeat:Connect(function()
+    if not ToggleEnabled then return end
     if not Ball or not Ball.Parent or not HumanoidRootPart then return end
 
-    -- Toggle 1
-    if Toggle1Enabled then
-        local isClose, isComing = IsBallCloseAndComingToggle1()
-        if isClose and isComing then
-            PressF()
-        end
-    end
-
-    -- Toggle 2
-    if Toggle2Enabled then
-        local isClose = IsBallCloseToggle2()
-        if isClose then
-            PressF()
-        end
-    end
-
-    -- Toggle 3
-    if Toggle3Enabled then
-        local isClose = IsBallCloseToggle3()
-        if isClose then
-            SpamF()
-        end
+    if IsBallClose() then
+        PressF()
+        wait(0.5) -- Pequeno atraso para evitar spam excessivo
     end
 end)
 
 -- Detectar clique na tela
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if not (Toggle1Enabled or Toggle2Enabled or Toggle3Enabled) then return end
+    if not ToggleEnabled then return end
     if gameProcessedEvent then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         PressF()
