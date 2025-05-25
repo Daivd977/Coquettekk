@@ -2,7 +2,6 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local StarterGui = game:GetService("StarterGui")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local lp = Players.LocalPlayer
@@ -122,7 +121,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6",
+    Title = "Coquette Hub 3.634235235",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -138,33 +137,8 @@ local Tab1 = Window:MakeTab({"Blade Ball", "swords"})
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local Ball = nil
 local LastHitTime = 0 -- Para controlar o cooldown
 local COOLDOWN = 0.5 -- Tempo de espera entre disparos do evento (em segundos)
-
--- Função para encontrar a bola dinamicamente
-local function FindBall()
-    -- Tenta encontrar a bola pelo caminho específico
-    local ballPath = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("Border") and workspace.Map.Grassy_Classic.Border:FindFirstChild("BallFloor")
-    if ballPath then
-        Ball = ballPath
-        print("Bola encontrada (caminho específico):", Ball:GetFullName())
-        return true
-    else
-        print("Bola não encontrada no caminho específico. Buscando de forma genérica...")
-        -- Busca genérica por objetos com "ball" ou "sphere" no nome
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if (obj.Name:lower():find("ball") or obj.Name:lower():find("sphere")) and obj:IsA("BasePart") then
-                Ball = obj
-                print("Bola encontrada (método genérico):", Ball:GetFullName())
-                return true
-            end
-        end
-        Ball = nil
-        print("Bola não encontrada.")
-        return false
-    end
-end
 
 -- Atualiza o Character e HumanoidRootPart quando o jogador renasce
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
@@ -182,15 +156,11 @@ local function HitBall()
         return
     end
 
-    -- Obtém as posições e orientações atuais
-    local playerCFrame = HumanoidRootPart.CFrame
-    local ballCFrame = Ball.CFrame
-
     -- Monta os argumentos para o evento remoto
     local args = {
         [2] = "Ep1adq", -- Identificador da ação
-        [3] = playerCFrame, -- Posição/orientação do jogador
-        [4] = ballCFrame, -- Posição/orientação da bola
+        [3] = HumanoidRootPart.CFrame, -- Posição/orientação do jogador
+        [4] = HumanoidRootPart.CFrame, -- Usamos a mesma posição do jogador, já que não estamos detectando a bola
         [5] = false -- Booleano (mantido como false, como no exemplo)
     }
 
@@ -206,63 +176,25 @@ end
 local ToggleEnabled = false
 
 local Toggle = Tab1:AddToggle({
-    Name = "Auto-Parry",
-    Description = "Ativa o auto-parry para Blade Ball",
+    Name = "Spam Hit",
+    Description = "Ativa o spam para bater na bola",
     Default = false
 })
 
 Toggle:Callback(function(Value)
     ToggleEnabled = Value
     if ToggleEnabled then
-        print("Auto-Parry ativado! Monitorando a bola...")
-        FindBall()
+        print("Spam Hit ativado!")
     else
-        print("Auto-Parry desativado!")
+        print("Spam Hit desativado!")
     end
 end)
 
--- Constantes
-local DETECTION_DISTANCE = 40 -- Ajustado para garantir detecção
-local BALL_SPEED_THRESHOLD = 5 -- Velocidade mínima para considerar que a bola está vindo na sua direção
-
--- Verifica se a bola está perto e vindo na sua direção
-local function IsBallCloseAndComing()
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
-    local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    print("Distância da bola até o jogador:", distance)
-
-    -- Verifica a velocidade da bola para determinar se está vindo na sua direção
-    local ballVelocity = Ball.Velocity or (Ball:FindFirstChild("BodyVelocity") and Ball.BodyVelocity.MaxForce or Vector3.new(0, 0, 0))
-    local directionToPlayer = (HumanoidRootPart.Position - Ball.Position).Unit
-    local speedTowardsPlayer = ballVelocity:Dot(directionToPlayer)
-    print("Velocidade da bola na direção do jogador:", speedTowardsPlayer)
-
-    return distance <= DETECTION_DISTANCE and speedTowardsPlayer > BALL_SPEED_THRESHOLD
-end
-
--- Loop para tentar encontrar a bola continuamente
-RunService.Heartbeat:Connect(function()
-    if ToggleEnabled and (not Ball or not Ball.Parent) then
-        FindBall()
-    end
-end)
-
--- Loop principal para o auto-parry
+-- Loop principal para o spam
 RunService.Heartbeat:Connect(function()
     if not ToggleEnabled then return end
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return end
+    if not HumanoidRootPart then return end
 
-    if IsBallCloseAndComing() then
-        print("Bola detectada como próxima e vindo na sua direção! Batendo...")
-        HitBall()
-    end
-end)
-
--- Detectar clique manual na tela (opcional, para depuração)
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if not ToggleEnabled then return end
-    if gameProcessedEvent then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        HitBall()
-    end
+    print("Tentando bater na bola (spam)...")
+    HitBall()
 end)
