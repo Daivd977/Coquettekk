@@ -2,9 +2,7 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local StarterGui = game:GetService("StarterGui")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local lp = Players.LocalPlayer
 
@@ -123,7 +121,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6646463476475476",
+    Title = "Coquette Hub 3.634235235",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -139,29 +137,8 @@ local Tab1 = Window:MakeTab({"Blade Ball", "swords"})
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local Ball = nil
-
--- Função para encontrar a bola dinamicamente
-local function FindBall()
-    local path = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("Border") and workspace.Map.Grassy_Classic.Border:FindFirstChild("BallFloor")
-    if path then
-        Ball = path
-        print("Bola encontrada:", Ball:GetFullName())
-        return true
-    else
-        print("Bola não encontrada. Tentando novamente...")
-        Ball = nil
-        -- Tenta encontrar a bola por outros meios
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj.Name:lower():find("ball") and obj:IsA("BasePart") then
-                Ball = obj
-                print("Bola encontrada (método alternativo):", Ball:GetFullName())
-                return true
-            end
-        end
-        return false
-    end
-end
+local LastHitTime = 0 -- Para controlar o cooldown
+local COOLDOWN = 0.5 -- Tempo de espera entre disparos do evento (em segundos)
 
 -- Atualiza o Character e HumanoidRootPart quando o jogador renasce
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
@@ -170,67 +147,54 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     print("Personagem atualizado!")
 end)
 
--- Função para pressionar F
-local function PressF()
-    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-    wait()
-    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-    print("Tecla F pressionada!")
+-- Função para bater na bola usando o evento remoto
+local function HitBall()
+    -- Verifica o cooldown
+    local currentTime = tick()
+    if currentTime - LastHitTime < COOLDOWN then
+        print("Cooldown ativo, esperando...")
+        return
+    end
+
+    -- Monta os argumentos para o evento remoto
+    local args = {
+        [2] = "Ep1adq", -- Identificador da ação
+        [3] = HumanoidRootPart.CFrame, -- Posição/orientação do jogador
+        [4] = HumanoidRootPart.CFrame, -- Usamos a mesma posição do jogador, já que não estamos detectando a bola
+        [5] = false -- Booleano (mantido como false, como no exemplo)
+    }
+
+    -- Dispara o evento remoto
+    pcall(function()
+        game:GetService("CookiesService"):WaitForChild("\n"):FireServer(unpack(args))
+        print("Evento remoto disparado para bater na bola!")
+        LastHitTime = tick() -- Atualiza o tempo do último disparo
+    end)
 end
 
 -- Toggle
 local ToggleEnabled = false
 
 local Toggle = Tab1:AddToggle({
-    Name = "Auto-Parry",
-    Description = "Ativa o auto-parry para Blade Ball",
+    Name = "Spam Hit",
+    Description = "Ativa o spam para bater na bola",
     Default = false
 })
 
 Toggle:Callback(function(Value)
     ToggleEnabled = Value
     if ToggleEnabled then
-        print("Auto-Parry ativado! Monitorando a bola...")
-        FindBall()
+        print("Spam Hit ativado!")
     else
-        print("Auto-Parry desativado!")
+        print("Spam Hit desativado!")
     end
 end)
 
--- Constantes
-local DETECTION_DISTANCE = 15 -- Distância para considerar a bola "perto"
-
--- Verifica se a bola está perto
-local function IsBallClose()
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
-    local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    print("Distância da bola:", distance)
-    return distance <= DETECTION_DISTANCE
-end
-
--- Loop para tentar encontrar a bola continuamente
-RunService.Heartbeat:Connect(function()
-    if ToggleEnabled and not Ball then
-        FindBall()
-    end
-end)
-
--- Loop principal para o auto-parry
+-- Loop principal para o spam
 RunService.Heartbeat:Connect(function()
     if not ToggleEnabled then return end
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return end
+    if not HumanoidRootPart then return end
 
-    if IsBallClose() then
-        PressF()
-        wait(0.5) -- Pequeno atraso para evitar spam excessivo
-    end
-end)
-
--- Detectar clique na tela
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if not ToggleEnabled then return end
-    if gameProcessedEvent then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        PressF()
-    end
+    print("Tentando bater na bola (spam)...")
+    HitBall()
 end)
