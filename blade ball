@@ -123,7 +123,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.5846857",
+    Title = "Coquette Hub 3.6",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -140,20 +140,13 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Ball = nil
-local PlayerFloor = nil
 
--- Função para encontrar a bola e o PlayerFloor dinamicamente
-local function FindBallAndPlayerFloor()
-    -- Tenta encontrar o PlayerFloor
-    local playerFloorPath = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("PlayerFloor")
-    if playerFloorPath then
-        PlayerFloor = playerFloorPath
-        print("PlayerFloor encontrado:", PlayerFloor:GetFullName())
-    else
-        print("PlayerFloor não encontrado.")
-        PlayerFloor = nil
-    end
+-- Detecta a plataforma do jogador
+local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+print("Plataforma detectada:", IsMobile and "Celular" or "PC")
 
+-- Função para encontrar a bola dinamicamente
+local function FindBall()
     -- Tenta encontrar a bola pelo caminho específico
     local ballPath = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("Border") and workspace.Map.Grassy_Classic.Border:FindFirstChild("BallFloor")
     if ballPath then
@@ -162,9 +155,9 @@ local function FindBallAndPlayerFloor()
         return true
     else
         print("Bola não encontrada no caminho específico. Buscando de forma genérica...")
-        -- Busca genérica por objetos com "ball" no nome
+        -- Busca genérica por objetos com "ball" ou "sphere" no nome
         for _, obj in pairs(workspace:GetDescendants()) do
-            if obj.Name:lower():find("ball") and obj:IsA("BasePart") then
+            if (obj.Name:lower():find("ball") or obj.Name:lower():find("sphere")) and obj:IsA("BasePart") then
                 Ball = obj
                 print("Bola encontrada (método genérico):", Ball:GetFullName())
                 return true
@@ -183,12 +176,13 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     print("Personagem atualizado!")
 end)
 
--- Função para pressionar F
-local function PressF()
-    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+-- Função para simular um clique na tela
+local function SimulateClick()
+    -- Simula um clique na tela (funciona tanto no PC quanto no celular)
+    VirtualInputManager:SendMouseButtonEvent(500, 500, 0, true, game, 0) -- Pressiona o botão esquerdo do mouse
     wait()
-    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-    print("Tecla F pressionada!")
+    VirtualInputManager:SendMouseButtonEvent(500, 500, 0, false, game, 0) -- Solta o botão esquerdo do mouse
+    print("Clique na tela simulado para bater na bola!")
 end
 
 -- Toggle
@@ -204,35 +198,27 @@ Toggle:Callback(function(Value)
     ToggleEnabled = Value
     if ToggleEnabled then
         print("Auto-Parry ativado! Monitorando a bola...")
-        FindBallAndPlayerFloor()
+        FindBall()
     else
         print("Auto-Parry desativado!")
     end
 end)
 
 -- Constantes
-local DETECTION_DISTANCE = 15 -- Distância para considerar a bola "perto"
+local DETECTION_DISTANCE = 40 -- Aumentei para garantir que a bola seja detectada
 
 -- Verifica se a bola está perto
 local function IsBallClose()
     if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
     local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
     print("Distância da bola até o jogador:", distance)
-
-    -- Verifica se o PlayerFloor existe e usa sua posição para ajudar na detecção
-    if PlayerFloor then
-        local distanceToPlayerFloor = (Ball.Position - PlayerFloor.Position).Magnitude
-        print("Distância da bola até o PlayerFloor:", distanceToPlayerFloor)
-        return distance <= DETECTION_DISTANCE or distanceToPlayerFloor <= DETECTION_DISTANCE
-    end
-
     return distance <= DETECTION_DISTANCE
 end
 
--- Loop para tentar encontrar a bola e o PlayerFloor continuamente
+-- Loop para tentar encontrar a bola continuamente
 RunService.Heartbeat:Connect(function()
-    if ToggleEnabled and (not Ball or not PlayerFloor) then
-        FindBallAndPlayerFloor()
+    if ToggleEnabled and (not Ball or not Ball.Parent) then
+        FindBall()
     end
 end)
 
@@ -242,16 +228,17 @@ RunService.Heartbeat:Connect(function()
     if not Ball or not Ball.Parent or not HumanoidRootPart then return end
 
     if IsBallClose() then
-        PressF()
-        wait(0.5) -- Pequeno atraso para evitar spam excessivo
+        print("Bola detectada como próxima! Batendo...")
+        SimulateClick()
+        wait(0.1) -- Atraso pequeno para evitar spam excessivo
     end
 end)
 
--- Detectar clique na tela
+-- Detectar clique manual na tela
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if not ToggleEnabled then return end
     if gameProcessedEvent then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        PressF()
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        SimulateClick()
     end
 end)
