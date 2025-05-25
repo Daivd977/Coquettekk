@@ -123,7 +123,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.666",
+    Title = "Coquette Hub 3.6646463476475476",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
