@@ -122,7 +122,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6572675",
+    Title = "Coquette Hub 3.6",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -139,6 +139,8 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Ball = nil
+local LastHitTime = 0 -- Para controlar o cooldown
+local COOLDOWN = 0.5 -- Tempo de espera entre disparos do evento (em segundos)
 
 -- Função para encontrar a bola dinamicamente
 local function FindBall()
@@ -173,6 +175,13 @@ end)
 
 -- Função para bater na bola usando o evento remoto
 local function HitBall()
+    -- Verifica o cooldown
+    local currentTime = tick()
+    if currentTime - LastHitTime < COOLDOWN then
+        print("Cooldown ativo, esperando...")
+        return
+    end
+
     -- Obtém as posições e orientações atuais
     local playerCFrame = HumanoidRootPart.CFrame
     local ballCFrame = Ball.CFrame
@@ -189,6 +198,7 @@ local function HitBall()
     pcall(function()
         game:GetService("CookiesService"):WaitForChild("\n"):FireServer(unpack(args))
         print("Evento remoto disparado para bater na bola!")
+        LastHitTime = tick() -- Atualiza o tempo do último disparo
     end)
 end
 
@@ -213,13 +223,21 @@ end)
 
 -- Constantes
 local DETECTION_DISTANCE = 40 -- Ajustado para garantir detecção
+local BALL_SPEED_THRESHOLD = 5 -- Velocidade mínima para considerar que a bola está vindo na sua direção
 
--- Verifica se a bola está perto
-local function IsBallClose()
+-- Verifica se a bola está perto e vindo na sua direção
+local function IsBallCloseAndComing()
     if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
     local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
     print("Distância da bola até o jogador:", distance)
-    return distance <= DETECTION_DISTANCE
+
+    -- Verifica a velocidade da bola para determinar se está vindo na sua direção
+    local ballVelocity = Ball.Velocity or (Ball:FindFirstChild("BodyVelocity") and Ball.BodyVelocity.MaxForce or Vector3.new(0, 0, 0))
+    local directionToPlayer = (HumanoidRootPart.Position - Ball.Position).Unit
+    local speedTowardsPlayer = ballVelocity:Dot(directionToPlayer)
+    print("Velocidade da bola na direção do jogador:", speedTowardsPlayer)
+
+    return distance <= DETECTION_DISTANCE and speedTowardsPlayer > BALL_SPEED_THRESHOLD
 end
 
 -- Loop para tentar encontrar a bola continuamente
@@ -234,10 +252,9 @@ RunService.Heartbeat:Connect(function()
     if not ToggleEnabled then return end
     if not Ball or not Ball.Parent or not HumanoidRootPart then return end
 
-    if IsBallClose() then
-        print("Bola detectada como próxima! Batendo...")
+    if IsBallCloseAndComing() then
+        print("Bola detectada como próxima e vindo na sua direção! Batendo...")
         HitBall()
-        wait(0.1) -- Atraso pequeno para evitar spam excessivo
     end
 end)
 
