@@ -1,11 +1,11 @@
---blade ball
-
-
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
 local lp = Players.LocalPlayer
 
 -- Função que cria a tela de loading e retorna uma promise
@@ -128,13 +128,10 @@ end
 
 -- Uso:
 local loadingPromise = createLoadingScreen()
-
--- Aqui você coloca o código que deve esperar até que o loading termine
 waitForPromise(loadingPromise)
 
 -- SEU CÓDIGO ABAIXO AQUI
 print("Loading completo! Agora executando o resto do script...")
--- ... resto do seu código ...
 
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
@@ -142,32 +139,44 @@ local Window = redzlib:MakeWindow({
     Title = "Coquette Hub 3.6",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
-  })
+})
 
-  Window:AddMinimizeButton({
+Window:AddMinimizeButton({
     Button = { Image = "rbxassetid://135441295532401", BackgroundTransparency = 0 },
     Corner = { CornerRadius = UDim.new(35, 1) },
 })
 
+local Tab1 = Window:MakeTab({"Blade Ball", "swords"}) -- Ajustei o nome da aba para "Blade Ball"
 
-
-local Tab1 = Window:MakeTab({"Credits", "info"})
-
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
+-- Variáveis dinâmicas
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local Ball = workspace.Map.Grassy_Classic.Border.BallFloor
+local Ball = nil
 
--- Constantes
-local DETECTION_DISTANCE = 15
-local PLAYER_DETECTION_DISTANCE = 20
-local BALL_SPEED_THRESHOLD = 10
+-- Função para encontrar a bola dinamicamente
+local function FindBall()
+    local path = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("Border") and workspace.Map.Grassy_Classic.Border:FindFirstChild("BallFloor")
+    if path then
+        Ball = path
+        print("Bola encontrada:", Ball:GetFullName())
+    else
+        print("Bola não encontrada. Tentando novamente...")
+        Ball = nil
+    end
+end
+
+-- Atualiza o Character e HumanoidRootPart quando o jogador renasce
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
+    print("Personagem atualizado!")
+end)
+
+-- Constantes ajustadas
+local DETECTION_DISTANCE = 20 -- Aumentei um pouco para facilitar a detecção
+local PLAYER_DETECTION_DISTANCE = 25
+local BALL_SPEED_THRESHOLD = 5 -- Reduzi para detectar bolas mais lentas
 
 -- Estado do toggle
 local ToggleEnabled = false
@@ -177,10 +186,12 @@ local function PressF()
     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
     wait()
     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+    print("Tecla F pressionada!")
 end
 
 -- Função para spam F
 local function SpamF()
+    print("Iniciando spam de F...")
     for i = 1, 5 do
         if not ToggleEnabled then break end
         PressF()
@@ -190,11 +201,12 @@ end
 
 -- Verifica se a bola está perto e vindo na sua direção
 local function IsBallCloseAndComing()
-    if not Ball or not HumanoidRootPart then return false, false end
+    if not Ball or not Ball.Parent or not HumanoidRootPart then return false, false end
     local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    local ballVelocity = Ball.Velocity
+    local ballVelocity = Ball:FindFirstChild("BodyVelocity") and Ball.BodyVelocity.MaxForce or Vector3.new(0, 0, 0) -- Blade Ball pode usar BodyVelocity
     local directionToPlayer = (HumanoidRootPart.Position - Ball.Position).Unit
     local speedTowardsPlayer = ballVelocity:Dot(directionToPlayer)
+    print("Distância:", distance, "Velocidade na direção:", speedTowardsPlayer)
     return distance <= DETECTION_DISTANCE, speedTowardsPlayer > BALL_SPEED_THRESHOLD
 end
 
@@ -209,6 +221,7 @@ local function IsOtherPlayerCloseAndHitting()
                 if distanceToOtherPlayer <= PLAYER_DETECTION_DISTANCE then
                     local _, isComing = IsBallCloseAndComing()
                     if isComing then
+                        print("Outro jogador próximo detectado e bola vindo na sua direção!")
                         return true
                     end
                 end
@@ -218,26 +231,34 @@ local function IsOtherPlayerCloseAndHitting()
     return false
 end
 
-
+-- Toggle
 local Toggle1 = Tab1:AddToggle({
-    Name = "Toggle",
-    Description = "This is a <font color='rgb(88, 101, 242)'>Toggle</font> Example",
+    Name = "Auto-Parry",
+    Description = "Ativa o auto-parry para Blade Ball",
     Default = false
 })
 
 Toggle1:Callback(function(Value)
     ToggleEnabled = Value
     if ToggleEnabled then
-        print("Toggle ativado! Monitorando a bola...")
+        print("Auto-Parry ativado! Monitorando a bola...")
+        FindBall() -- Tenta encontrar a bola ao ativar o toggle
     else
-        print("Toggle desativado!")
+        print("Auto-Parry desativado!")
+    end
+end)
+
+-- Loop para tentar encontrar a bola continuamente
+RunService.Heartbeat:Connect(function()
+    if ToggleEnabled and not Ball then
+        FindBall()
     end
 end)
 
 -- Loop principal
 RunService.Heartbeat:Connect(function()
     if not ToggleEnabled then return end
-    if not Ball or not HumanoidRootPart then return end
+    if not Ball or not Ball.Parent or not HumanoidRootPart then return end
 
     local isClose, isComing = IsBallCloseAndComing()
     local otherPlayerHitting = IsOtherPlayerCloseAndHitting()
