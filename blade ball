@@ -4,7 +4,6 @@ local CoreGui = game:GetService("CoreGui")
 local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local lp = Players.LocalPlayer
 
@@ -123,7 +122,7 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6",
+    Title = "Coquette Hub 3.6572675",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -140,10 +139,6 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Ball = nil
-
--- Detecta a plataforma do jogador
-local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-print("Plataforma detectada:", IsMobile and "Celular" or "PC")
 
 -- Função para encontrar a bola dinamicamente
 local function FindBall()
@@ -176,13 +171,25 @@ LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     print("Personagem atualizado!")
 end)
 
--- Função para simular um clique na tela
-local function SimulateClick()
-    -- Simula um clique na tela (funciona tanto no PC quanto no celular)
-    VirtualInputManager:SendMouseButtonEvent(500, 500, 0, true, game, 0) -- Pressiona o botão esquerdo do mouse
-    wait()
-    VirtualInputManager:SendMouseButtonEvent(500, 500, 0, false, game, 0) -- Solta o botão esquerdo do mouse
-    print("Clique na tela simulado para bater na bola!")
+-- Função para bater na bola usando o evento remoto
+local function HitBall()
+    -- Obtém as posições e orientações atuais
+    local playerCFrame = HumanoidRootPart.CFrame
+    local ballCFrame = Ball.CFrame
+
+    -- Monta os argumentos para o evento remoto
+    local args = {
+        [2] = "Ep1adq", -- Identificador da ação
+        [3] = playerCFrame, -- Posição/orientação do jogador
+        [4] = ballCFrame, -- Posição/orientação da bola
+        [5] = false -- Booleano (mantido como false, como no exemplo)
+    }
+
+    -- Dispara o evento remoto
+    pcall(function()
+        game:GetService("CookiesService"):WaitForChild("\n"):FireServer(unpack(args))
+        print("Evento remoto disparado para bater na bola!")
+    end)
 end
 
 -- Toggle
@@ -205,7 +212,7 @@ Toggle:Callback(function(Value)
 end)
 
 -- Constantes
-local DETECTION_DISTANCE = 40 -- Aumentei para garantir que a bola seja detectada
+local DETECTION_DISTANCE = 40 -- Ajustado para garantir detecção
 
 -- Verifica se a bola está perto
 local function IsBallClose()
@@ -229,16 +236,16 @@ RunService.Heartbeat:Connect(function()
 
     if IsBallClose() then
         print("Bola detectada como próxima! Batendo...")
-        SimulateClick()
+        HitBall()
         wait(0.1) -- Atraso pequeno para evitar spam excessivo
     end
 end)
 
--- Detectar clique manual na tela
+-- Detectar clique manual na tela (opcional, para depuração)
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if not ToggleEnabled then return end
     if gameProcessedEvent then return end
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        SimulateClick()
+        HitBall()
     end
 end)
