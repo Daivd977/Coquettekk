@@ -147,7 +147,7 @@ local lp = Players.LocalPlayer
 -- Criação da janela
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 1,0",
+    Title = "Coquette Hub 1,00",
     SubTitle = "by Lolytadev 💖",
     SaveFolder = "teste"
 })
@@ -173,55 +173,77 @@ local defaultGravity = 196.2
 local autoFarm = false
 local autoSell = false
 
--- Substitua o Toggle de Auto Sell por este bloco:
+
+local lp = game:GetService("Players").LocalPlayer
+
 Tab1:AddToggle({
-    Name = "Auto Vender Frutas (Aprimorado)",
-    Description = "Vende frutas a cada 5 minutos e volta para sua posição",
+    Name = "Auto Farm Grow a Garden",
+    Description = "Coleta TODAS as plantas/frutas automaticamente e vende a cada 5min",
     Default = false,
     Callback = function(Value)
-        autoSell = Value
-        if autoSell then
+        _G.AutoFarmGG = Value
+        
+        if _G.AutoFarmGG then
             spawn(function()
-                local lastSell = tick()
-                local sellPos = Vector3.new(89.35, 5.89, 0.71)
-                while autoSell do
-                    -- Coleta frutas à distância
-                    pcall(function()
-                        for _, farmPlot in ipairs(workspace.Farm:GetChildren()) do
-                            if farmPlot:FindFirstChild("Important") and farmPlot.Important:FindFirstChild("Plants_Physical") then
-                                for _, plant in ipairs(farmPlot.Important.Plants_Physical:GetChildren()) do
-                                    -- Simula clique na fruta pronta (se tiver ProximityPrompt ou ClickDetector)
-                                    local prompt = plant:FindFirstChildWhichIsA("ProximityPrompt") or plant:FindFirstChildWhichIsA("ClickDetector")
+                -- Configurações
+                local sellPosition = Vector3.new(89.35, 5.89, 0.71) -- Posição do vendedor
+                local lastSellTime = tick()
+                local collectCooldown = 0.2 -- Delay entre coletas
+                
+                -- Lista completa de plantas/frutas do Grow a Garden
+                local gardenPlants = {
+                    "Apple", "Blueberry", "Strawberry", "Raspberry", "Tomato",
+                    "Carrot", "Corn", "Pumpkin", "Watermelon", "Pineapple",
+                    "Sunflower", "Rose", "Tulip", "Daisy", "Cactus",
+                    -- Adicione outras plantas que encontrar
+                }
+                
+                -- Função para coletar plantas/frutas
+                local function collectPlants()
+                    for _, plot in ipairs(workspace.FarmPlots:GetChildren()) do -- Alterado para FarmPlots (comum no jogo)
+                        if plot:FindFirstChild("Plants") then
+                            for _, plant in ipairs(plot.Plants:GetDescendants()) do
+                                if table.find(gardenPlants, plant.Name) and plant:IsA("BasePart") then
+                                    local prompt = plant:FindFirstChildWhichIsA("ProximityPrompt")
                                     if prompt then
-                                        if prompt:IsA("ProximityPrompt") then
-                                            fireproximityprompt(prompt)
-                                        elseif prompt:IsA("ClickDetector") then
-                                            fireclickdetector(prompt)
-                                        end
+                                        fireproximityprompt(prompt)
+                                        task.wait(collectCooldown)
                                     end
                                 end
                             end
                         end
-                    end)
-
-                    -- A cada 5 minutos faz o auto sell
-                    if tick() - lastSell >= 30 then
-                        lastSell = tick()
+                    end
+                end
+                
+                -- Loop principal
+                while _G.AutoFarmGG and task.wait(1) do
+                    -- Coleta contínua
+                    pcall(collectPlants)
+                    
+                    -- Auto-venda a cada 5 minutos
+                    if tick() - lastSellTime >= 30 then
+                        lastSellTime = tick()
+                        
                         local char = lp.Character
-                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                        if hrp then
-                            local oldPos = hrp.CFrame
-                            -- Teleporta para o local de venda
-                            hrp.CFrame = CFrame.new(sellPos)
-                            task.wait(0.2)
-                            -- Executa o comando de venda
-                            game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("Sell_Inventory"):FireServer()
-                            task.wait(0.6)
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            local hrp = char.HumanoidRootPart
+                            local savedPos = hrp.CFrame
+                            
+                            -- Teleporta para vender
+                            hrp.CFrame = CFrame.new(sellPosition)
+                            task.wait(0.5)
+                            
+                            -- Vende o inventário
+                            local sellEvent = game:GetService("ReplicatedStorage"):FindFirstChild("SellAll", true)
+                            if sellEvent then
+                                sellEvent:FireServer()
+                            end
+                            
+                            task.wait(1)
                             -- Volta para a posição original
-                            hrp.CFrame = oldPos
+                            hrp.CFrame = savedPos
                         end
                     end
-                    task.wait(1)
                 end
             end)
         end
