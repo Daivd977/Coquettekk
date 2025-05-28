@@ -1,255 +1,118 @@
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local RunService = game:GetService("RunService")
+-- LocalScript para exibir a posição do jogador em uma UI
+
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui")
-local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- Configurações
-local DETECTION_DISTANCE = 40 -- Distância para considerar a bola "perto"
-local BALL_SPEED_THRESHOLD = 5 -- Velocidade mínima para considerar que a bola está vindo na sua direção
-local CLICK_X = 960 -- Coordenada X central (ajuste conforme a resolução da tela)
-local CLICK_Y = 540 -- Coordenada Y central (ajuste conforme a resolução da tela)
-local COOLDOWN = 0.5 -- Intervalo entre cliques (em segundos)
-local DEBUG_ENABLED = true -- Para prints de depuração
+local LocalPlayer = Players.LocalPlayer
 
--- Função de depuração
-local function debugPrint(...)
-    if DEBUG_ENABLED then
-        print(...)
+-- Cria a ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PositionUI"
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false -- Não reseta a UI quando o jogador morre
+
+-- Cria o Frame principal da UI
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0, 10, 0, 10) -- Posição no canto superior esquerdo
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+-- Adiciona um efeito de canto arredondado
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
+
+-- Cria o Label para exibir a posição
+local positionLabel = Instance.new("TextLabel")
+positionLabel.Size = UDim2.new(1, 0, 0, 50)
+positionLabel.Position = UDim2.new(0, 0, 0, 25)
+positionLabel.BackgroundTransparency = 1
+positionLabel.Text = "Posição: Desativada"
+positionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+positionLabel.TextScaled = true
+positionLabel.Font = Enum.Font.SourceSansBold
+positionLabel.Parent = frame
+
+-- Cria o Toggle (botão de ativar/desativar)
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 80, 0, 30)
+toggleButton.Position = UDim2.new(0.5, -40, 0, 70)
+toggleButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+toggleButton.Text = "Ativar"
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextScaled = true
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Parent = frame
+
+-- Adiciona um efeito de canto arredondado ao botão
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 8)
+buttonCorner.Parent = toggleButton
+
+-- Variáveis de controle
+local isShowingPosition = false
+local updateConnection = nil
+
+-- Função para atualizar a posição do jogador na UI
+local function updatePlayerPosition()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local position = LocalPlayer.Character.HumanoidRootPart.Position
+        positionLabel.Text = string.format("Posição: X = %.2f, Y = %.2f, Z = %.2f", position.X, position.Y, position.Z)
+    else
+        positionLabel.Text = "Posição: Personagem não encontrado!"
     end
 end
 
--- Variáveis
-local lp = Players.LocalPlayer
-local character = lp.Character or lp.CharacterAdded:Wait()
-local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local Ball = nil
-local lastClickTime = 0 -- Para controlar o cooldown
-
--- Função que cria a tela de loading e retorna uma promise
-local function createLoadingScreen()
-    local promise = {}
-    promise.completed = false
-    promise.connection = nil
-    
-    pcall(function()
-        if CoreGui:FindFirstChild("LoadingScreen") then
-            CoreGui.LoadingScreen:Destroy()
-        end
-    end)
-
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "LoadingScreen"
-    gui.IgnoreGuiInset = true
-    gui.ResetOnSpawn = false
-    gui.Parent = CoreGui
-    pcall(function() syn.protect_gui(gui) end)
-
-    local frame = Instance.new("Frame")
-    frame.BackgroundColor3 = Color3.new(0, 0, 0)
-    frame.BackgroundTransparency = 0.3
-    frame.Size = UDim2.new(1, 0, 1, 0)
-    frame.Parent = gui
-
-    local image = Instance.new("ImageLabel")
-    image.Size = UDim2.new(0, 300, 0, 300)
-    image.Position = UDim2.new(0.5, -150, 0.35, -150)
-    image.BackgroundTransparency = 1
-    image.Image = "rbxassetid://75732220851513"
-    image.Parent = frame
-
-    local nameText = Instance.new("TextLabel")
-    nameText.Size = UDim2.new(1, 0, 0, 40)
-    nameText.Position = UDim2.new(0, 0, 0.65, 0)
-    nameText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameText.TextStrokeTransparency = 0.3
-    nameText.BackgroundTransparency = 1
-    nameText.Font = Enum.Font.FredokaOne
-    nameText.TextScaled = true
-    nameText.Text = "Verificando usuário: "..lp.Name.." (Conta: "..tostring(lp.AccountAge).." dias)"
-    nameText.Parent = frame
-
-    local barBG = Instance.new("Frame")
-    barBG.Size = UDim2.new(0.6, 0, 0.03, 0)
-    barBG.Position = UDim2.new(0.2, 0, 0.8, 0)
-    barBG.BackgroundColor3 = Color3.new(1, 1, 1)
-    barBG.BorderSizePixel = 0
-    barBG.Parent = frame
-
-    local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(0, 0, 1, 0)
-    bar.BackgroundColor3 = Color3.new(0.7, 0.2, 0.6)
-    bar.BorderSizePixel = 0
-    bar.Parent = barBG
-
-    local tween = TweenService:Create(
-        bar,
-        TweenInfo.new(4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {Size = UDim2.new(1, 0, 1, 0)}
-    )
-    tween:Play()
-
-    local function cleanup()
-        if gui then
-            gui:Destroy()
-        end
-        if promise.connection then
-            promise.connection:Disconnect()
-        end
-    end
-
-    promise.connection = tween.Completed:Connect(function()
-        TweenService:Create(frame, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(barBG, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(bar, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(image, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
-        TweenService:Create(nameText, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
-        
-        task.delay(1.2, function()
-            local sound = Instance.new("Sound")
-            sound.SoundId = "rbxassetid://8486683243"
-            sound.Volume = 0.5
-            sound.PlayOnRemove = true
-            sound.Parent = workspace
-            sound:Destroy()
-            
-            StarterGui:SetCore("SendNotification", {
-                Title = "Coquette Hub",
-                Text = "Bem-vindo à Coquette Hub 💖",
-                Duration = 4
-            })
-            
-            promise.completed = true
-            cleanup()
+-- Função para alternar a exibição da posição
+local function togglePositionDisplay()
+    isShowingPosition = not isShowingPosition
+    if isShowingPosition then
+        toggleButton.Text = "Desativar"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100) -- Vermelho quando ativado
+        -- Inicia a atualização da posição
+        updateConnection = RunService.Heartbeat:Connect(function()
+            updatePlayerPosition()
         end)
-    end)
-    
-    return promise
-end
-
-local function waitForPromise(promise)
-    while not promise.completed do
-        task.wait()
-    end
-end
-
-local loadingPromise = createLoadingScreen()
-waitForPromise(loadingPromise)
-
-debugPrint("Loading completo! Agora executando o resto do script...")
-
--- Cria a interface gráfica com o toggle
-local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
-
-local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6",
-    SubTitle = "by Lolytadev 💖",
-    SaveFolder = "teste"
-})
-
-Window:AddMinimizeButton({
-    Button = { Image = "rbxassetid://135441295532401", BackgroundTransparency = 0 },
-    Corner = { CornerRadius = UDim.new(35, 1) },
-})
-
-local Tab1 = Window:MakeTab({"Blade Ball", "swords"})
-
--- Toggle
-local ToggleEnabled = false
-
-local Toggle = Tab1:AddToggle({
-    Name = "Auto-Parry",
-    Description = "Ativa o auto-parry para Blade Ball",
-    Default = false
-})
-
-Toggle:Callback(function(Value)
-    ToggleEnabled = Value
-    if ToggleEnabled then
-        debugPrint("Auto-Parry ativado! Monitorando a bola...")
-        FindBall()
     else
-        debugPrint("Auto-Parry desativado!")
-    end
-end)
-
--- Função para encontrar a bola dinamicamente
-local function FindBall()
-    -- Tenta encontrar a bola pelo caminho específico
-    local ballPath = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Grassy_Classic") and workspace.Map.Grassy_Classic:FindFirstChild("Border") and workspace.Map.Grassy_Classic.Border:FindFirstChild("BallFloor")
-    if ballPath then
-        Ball = ballPath
-        debugPrint("Bola encontrada (caminho específico):", Ball:GetFullName())
-        return true
-    else
-        debugPrint("Bola não encontrada no caminho específico. Buscando de forma genérica...")
-        -- Busca genérica por objetos com "ball" ou "sphere" no nome
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if (obj.Name:lower():find("ball") or obj.Name:lower():find("sphere")) and obj:IsA("BasePart") then
-                Ball = obj
-                debugPrint("Bola encontrada (método genérico):", Ball:GetFullName())
-                return true
-            end
+        toggleButton.Text = "Ativar"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- Cinza quando desativado
+        -- Para a atualização e limpa o texto
+        if updateConnection then
+            updateConnection:Disconnect()
+            updateConnection = nil
         end
-        Ball = nil
-        debugPrint("Bola não encontrada.")
-        return false
+        positionLabel.Text = "Posição: Desativada"
     end
 end
 
--- Atualiza o personagem quando o jogador renasce
-lp.CharacterAdded:Connect(function(newCharacter)
-    character = newCharacter
-    HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
-    debugPrint("Personagem atualizado!")
-end)
+-- Conecta o botão ao clique
+toggleButton.MouseButton1Click:Connect(togglePositionDisplay)
 
--- Função para simular um clique na tela
-local function simulateClick()
-    -- Verifica o cooldown
-    local currentTime = tick()
-    if currentTime - lastClickTime < COOLDOWN then
-        debugPrint("Cooldown ativo, esperando...")
-        return
-    end
+-- Permite arrastar a UI
+local dragging = false
+local dragStart = nil
+local startPos = nil
 
-    VirtualInputManager:SendMouseButtonEvent(CLICK_X, CLICK_Y, 0, true, game, 0) -- Pressiona o botão esquerdo
-    wait()
-    VirtualInputManager:SendMouseButtonEvent(CLICK_X, CLICK_Y, 0, false, game, 0) -- Solta o botão esquerdo
-    debugPrint("Clique simulado na tela em (" .. CLICK_X .. ", " .. CLICK_Y .. ")!")
-    lastClickTime = tick() -- Atualiza o tempo do último clique
-end
-
--- Verifica se a bola está perto e vindo na sua direção
-local function IsBallCloseAndComing()
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return false end
-    local distance = (Ball.Position - HumanoidRootPart.Position).Magnitude
-    debugPrint("Distância da bola até o jogador:", distance)
-
-    -- Verifica a velocidade da bola para determinar se está vindo na sua direção
-    local ballVelocity = Ball.Velocity or (Ball:FindFirstChild("BodyVelocity") and Ball.BodyVelocity.MaxForce or Vector3.new(0, 0, 0))
-    local directionToPlayer = (HumanoidRootPart.Position - Ball.Position).Unit
-    local speedTowardsPlayer = ballVelocity:Dot(directionToPlayer)
-    debugPrint("Velocidade da bola na direção do jogador:", speedTowardsPlayer)
-
-    return distance <= DETECTION_DISTANCE and speedTowardsPlayer > BALL_SPEED_THRESHOLD
-end
-
--- Loop para tentar encontrar a bola continuamente
-RunService.Heartbeat:Connect(function()
-    if ToggleEnabled and (not Ball or not Ball.Parent) then
-        FindBall()
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
     end
 end)
 
--- Loop principal para o auto-parry
-RunService.Heartbeat:Connect(function()
-    if not ToggleEnabled then return end
-    if not Ball or not Ball.Parent or not HumanoidRootPart then return end
+frame.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
 
-    if IsBallCloseAndComing() then
-        debugPrint("Bola detectada como próxima e vindo na sua direção! Batendo...")
-        simulateClick()
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
     end
 end)
