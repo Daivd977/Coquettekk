@@ -134,10 +134,33 @@ waitForPromise(loadingPromise)
 print("Loading completo! Agora executando o resto do script...")
 -- ... resto do seu código ...
 
--- Criação das Tabs
-local TabFarm = Window:MakeTab({"Auto Farm", "rbxassetid://7734053495"})
-local TabPlayer = Window:MakeTab({"Player", "rbxassetid://7734053495"})
-local TabExtras = Window:MakeTab({"Extras", "rbxassetid://7734053495"})
+-- Grow a Garden - Coquette Hub
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
+local lp = Players.LocalPlayer
+
+-- (Seu loading screen aqui...)
+
+-- Criação da janela
+local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
+local Window = redzlib:MakeWindow({
+    Title = "Coquette Hub 1,0",
+    SubTitle = "by Lolytadev 💖",
+    SaveFolder = "teste"
+})
+
+Window:AddMinimizeButton({
+    Button = { Image = "rbxassetid://135441295532401", BackgroundTransparency = 0 },
+    Corner = { CornerRadius = UDim.new(35, 1) },
+})
+
+-- Tabs com ícones por nome
+local Tab1 = Window:MakeTab({"Auto Farm", "leaf"})
+local Tab2 = Window:MakeTab({"Player", "user"})
+local Tab3 = Window:MakeTab({"Extras", "star"})
 
 -- Valores padrão
 local defaultWalkSpeed = 16
@@ -150,7 +173,7 @@ local defaultGravity = 196.2
 local autoFarm = false
 local autoSell = false
 
-TabFarm:AddToggle({
+Tab1:AddToggle({
     Name = "Auto Coletar Frutas",
     Description = "Coleta frutas automaticamente",
     Default = false,
@@ -174,7 +197,7 @@ TabFarm:AddToggle({
     end
 })
 
-TabFarm:AddToggle({
+Tab1:AddToggle({
     Name = "Auto Vender Frutas",
     Description = "Vende frutas automaticamente",
     Default = false,
@@ -198,7 +221,7 @@ TabFarm:AddToggle({
     end
 })
 
-TabFarm:AddButton({
+Tab1:AddButton({
     Name = "Teleportar para o Mercado",
     Description = "Teleporta para o local de venda",
     Callback = function()
@@ -214,7 +237,7 @@ TabFarm:AddButton({
 -- =========================
 -- Tab: Player
 -- =========================
-TabPlayer:AddSlider({
+Tab2:AddSlider({
     Name = "Speed",
     Min = 16,
     Max = 200,
@@ -226,7 +249,7 @@ TabPlayer:AddSlider({
     end
 })
 
-TabPlayer:AddSlider({
+Tab2:AddSlider({
     Name = "Jump Power",
     Min = 50,
     Max = 300,
@@ -238,7 +261,7 @@ TabPlayer:AddSlider({
     end
 })
 
-TabPlayer:AddSlider({
+Tab2:AddSlider({
     Name = "Gravidade",
     Min = 50,
     Max = 400,
@@ -249,7 +272,7 @@ TabPlayer:AddSlider({
     end
 })
 
-TabPlayer:AddButton({
+Tab2:AddButton({
     Name = "Resetar Speed/Jump/Gravidade",
     Description = "Volta tudo ao padrão",
     Callback = function()
@@ -267,7 +290,7 @@ TabPlayer:AddButton({
 -- =========================
 local infJump = false
 
-TabExtras:AddToggle({
+Tab3:AddToggle({
     Name = "Infinite Jump",
     Description = "Pule infinitamente",
     Default = false,
@@ -285,7 +308,7 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
     end
 end)
 
-TabExtras:AddButton({
+Tab3:AddButton({
     Name = "Teleportar para o Topo",
     Description = "Teleporta para o alto do mapa",
     Callback = function()
@@ -296,7 +319,7 @@ TabExtras:AddButton({
     end
 })
 
-TabExtras:AddToggle({
+Tab3:AddToggle({
     Name = "Anti-AFK",
     Description = "Evita ser kickado por inatividade",
     Default = true,
