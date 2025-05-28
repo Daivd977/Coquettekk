@@ -173,24 +173,55 @@ local defaultGravity = 196.2
 local autoFarm = false
 local autoSell = false
 
+-- Substitua o Toggle de Auto Sell por este bloco:
 Tab1:AddToggle({
-    Name = "Auto Coletar Frutas",
-    Description = "Coleta frutas automaticamente",
+    Name = "Auto Vender Frutas (Aprimorado)",
+    Description = "Vende frutas a cada 5 minutos e volta para sua posição",
     Default = false,
     Callback = function(Value)
-        autoFarm = Value
-        if autoFarm then
+        autoSell = Value
+        if autoSell then
             spawn(function()
-                while autoFarm do
-                    for _, fruit in pairs(workspace:GetDescendants()) do
-                        if fruit:IsA("BasePart") and fruit.Name:lower():find("fruit") then
-                            pcall(function()
-                                firetouchinterest(lp.Character.HumanoidRootPart, fruit, 0)
-                                firetouchinterest(lp.Character.HumanoidRootPart, fruit, 1)
-                            end)
+                local lastSell = tick()
+                local sellPos = Vector3.new(89.35, 5.89, 0.71)
+                while autoSell do
+                    -- Coleta frutas à distância
+                    pcall(function()
+                        for _, farmPlot in ipairs(workspace.Farm:GetChildren()) do
+                            if farmPlot:FindFirstChild("Important") and farmPlot.Important:FindFirstChild("Plants_Physical") then
+                                for _, plant in ipairs(farmPlot.Important.Plants_Physical:GetChildren()) do
+                                    -- Simula clique na fruta pronta (se tiver ProximityPrompt ou ClickDetector)
+                                    local prompt = plant:FindFirstChildWhichIsA("ProximityPrompt") or plant:FindFirstChildWhichIsA("ClickDetector")
+                                    if prompt then
+                                        if prompt:IsA("ProximityPrompt") then
+                                            fireproximityprompt(prompt)
+                                        elseif prompt:IsA("ClickDetector") then
+                                            fireclickdetector(prompt)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end)
+
+                    -- A cada 5 minutos faz o auto sell
+                    if tick() - lastSell >= 30 then
+                        lastSell = tick()
+                        local char = lp.Character
+                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            local oldPos = hrp.CFrame
+                            -- Teleporta para o local de venda
+                            hrp.CFrame = CFrame.new(sellPos)
+                            task.wait(0.2)
+                            -- Executa o comando de venda
+                            game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("Sell_Inventory"):FireServer()
+                            task.wait(0.6)
+                            -- Volta para a posição original
+                            hrp.CFrame = oldPos
                         end
                     end
-                    task.wait(0.2)
+                    task.wait(1)
                 end
             end)
         end
