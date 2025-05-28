@@ -134,68 +134,36 @@ waitForPromise(loadingPromise)
 print("Loading completo! Agora executando o resto do script...")
 -- ... resto do seu código ...
 
--- Carregar OrionLib
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
-
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
-local Humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-local UserInputService = game:GetService("UserInputService")
+-- Criação das Tabs
+local TabFarm = Window:MakeTab({"Auto Farm", "rbxassetid://7734053495"})
+local TabPlayer = Window:MakeTab({"Player", "rbxassetid://7734053495"})
+local TabExtras = Window:MakeTab({"Extras", "rbxassetid://7734053495"})
 
 -- Valores padrão
 local defaultWalkSpeed = 16
 local defaultJumpPower = 50
 local defaultGravity = 196.2
 
--- Janela principal
-local Window = OrionLib:MakeWindow({
-    Name = "Coquette Hub | Grow a Garden",
-    HidePremium = false,
-    SaveConfig = true,
-    ConfigFolder = "CoquetteHubGrowGarden"
-})
-
--- Função para resetar valores
-local function ResetAll()
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    hum.WalkSpeed = defaultWalkSpeed
-    hum.JumpPower = defaultJumpPower
-    Workspace.Gravity = defaultGravity
-    OrionLib:MakeNotification({
-        Name = "Resetado!",
-        Content = "Speed, Jump e Gravidade voltaram ao normal.",
-        Image = "rbxassetid://7733960981",
-        Time = 3
-    })
-end
-
 -- =========================
--- Tab: Farm (Auto Farm)
+-- Tab: Auto Farm
 -- =========================
-local FarmTab = Window:MakeTab({
-    Name = "Auto Farm",
-    Icon = "rbxassetid://7734053495"
-})
-
 local autoFarm = false
 local autoSell = false
 
-FarmTab:AddToggle({
+TabFarm:AddToggle({
     Name = "Auto Coletar Frutas",
+    Description = "Coleta frutas automaticamente",
     Default = false,
     Callback = function(Value)
         autoFarm = Value
         if autoFarm then
-            OrionLib:MakeNotification({Name="Auto Farm", Content="Auto Coletar Ativado!", Image="rbxassetid://7734053495", Time=2})
             spawn(function()
                 while autoFarm do
-                    for _, fruit in pairs(Workspace:GetDescendants()) do
+                    for _, fruit in pairs(workspace:GetDescendants()) do
                         if fruit:IsA("BasePart") and fruit.Name:lower():find("fruit") then
                             pcall(function()
-                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, fruit, 0)
-                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, fruit, 1)
+                                firetouchinterest(lp.Character.HumanoidRootPart, fruit, 0)
+                                firetouchinterest(lp.Character.HumanoidRootPart, fruit, 1)
                             end)
                         end
                     end
@@ -206,21 +174,20 @@ FarmTab:AddToggle({
     end
 })
 
-FarmTab:AddToggle({
+TabFarm:AddToggle({
     Name = "Auto Vender Frutas",
+    Description = "Vende frutas automaticamente",
     Default = false,
     Callback = function(Value)
         autoSell = Value
         if autoSell then
-            OrionLib:MakeNotification({Name="Auto Sell", Content="Auto Vender Ativado!", Image="rbxassetid://7734053495", Time=2})
             spawn(function()
                 while autoSell do
-                    -- Tenta encontrar e tocar no vendedor (ajuste o nome se necessário)
-                    for _, sell in pairs(Workspace:GetDescendants()) do
+                    for _, sell in pairs(workspace:GetDescendants()) do
                         if sell:IsA("BasePart") and (sell.Name:lower():find("sell") or sell.Name:lower():find("market")) then
                             pcall(function()
-                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, sell, 0)
-                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, sell, 1)
+                                firetouchinterest(lp.Character.HumanoidRootPart, sell, 0)
+                                firetouchinterest(lp.Character.HumanoidRootPart, sell, 1)
                             end)
                         end
                     end
@@ -231,136 +198,113 @@ FarmTab:AddToggle({
     end
 })
 
-FarmTab:AddButton({
+TabFarm:AddButton({
     Name = "Teleportar para o Mercado",
+    Description = "Teleporta para o local de venda",
     Callback = function()
-        -- Tenta encontrar o mercado/sell
-        for _, sell in pairs(Workspace:GetDescendants()) do
+        for _, sell in pairs(workspace:GetDescendants()) do
             if sell:IsA("BasePart") and (sell.Name:lower():find("sell") or sell.Name:lower():find("market")) then
-                LocalPlayer.Character:PivotTo(sell.CFrame + Vector3.new(0, 5, 0))
-                OrionLib:MakeNotification({Name="Teleporte", Content="Teleportado para o Mercado!", Image="rbxassetid://7734053495", Time=2})
+                lp.Character:PivotTo(sell.CFrame + Vector3.new(0, 5, 0))
                 return
             end
         end
-        OrionLib:MakeNotification({Name="Teleporte", Content="Mercado não encontrado!", Image="rbxassetid://7734053495", Time=2})
     end
 })
 
 -- =========================
--- Tab: Player (Speed, Jump, Gravidade)
+-- Tab: Player
 -- =========================
-local PlayerTab = Window:MakeTab({
-    Name = "Player",
-    Icon = "rbxassetid://7734053495"
-})
-
-PlayerTab:AddSlider({
+TabPlayer:AddSlider({
     Name = "Speed",
     Min = 16,
     Max = 200,
+    Increase = 1,
     Default = defaultWalkSpeed,
-    Increment = 1,
-    ValueName = "Speed",
     Callback = function(Value)
-        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        hum.WalkSpeed = Value
+        local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = Value end
     end
 })
 
-PlayerTab:AddSlider({
+TabPlayer:AddSlider({
     Name = "Jump Power",
     Min = 50,
     Max = 300,
+    Increase = 1,
     Default = defaultJumpPower,
-    Increment = 1,
-    ValueName = "Jump",
     Callback = function(Value)
-        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        hum.JumpPower = Value
+        local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.JumpPower = Value end
     end
 })
 
-PlayerTab:AddSlider({
+TabPlayer:AddSlider({
     Name = "Gravidade",
     Min = 50,
     Max = 400,
+    Increase = 1,
     Default = defaultGravity,
-    Increment = 1,
-    ValueName = "Gravidade",
     Callback = function(Value)
-        Workspace.Gravity = Value
+        workspace.Gravity = Value
     end
 })
 
-PlayerTab:AddButton({
+TabPlayer:AddButton({
     Name = "Resetar Speed/Jump/Gravidade",
-    Callback = ResetAll
+    Description = "Volta tudo ao padrão",
+    Callback = function()
+        local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = defaultWalkSpeed
+            hum.JumpPower = defaultJumpPower
+        end
+        workspace.Gravity = defaultGravity
+    end
 })
 
 -- =========================
--- Tab: Funções Extras
+-- Tab: Extras
 -- =========================
-local ExtraTab = Window:MakeTab({
-    Name = "Extras",
-    Icon = "rbxassetid://7734053495"
-})
-
--- Infinite Jump
 local infJump = false
-ExtraTab:AddToggle({
+
+TabExtras:AddToggle({
     Name = "Infinite Jump",
+    Description = "Pule infinitamente",
     Default = false,
     Callback = function(Value)
         infJump = Value
-        if infJump then
-            OrionLib:MakeNotification({Name="Infinite Jump", Content="Ativado!", Image="rbxassetid://7734053495", Time=2})
-        else
-            OrionLib:MakeNotification({Name="Infinite Jump", Content="Desativado!", Image="rbxassetid://7734053495", Time=2})
-        end
     end
 })
 
-UserInputService.JumpRequest:Connect(function()
+game:GetService("UserInputService").JumpRequest:Connect(function()
     if infJump then
-        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local hum = char:FindFirstChildOfClass("Humanoid")
+        local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
         if hum then
             hum:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 end)
 
--- Função extra: Teleportar para o topo do mapa
-ExtraTab:AddButton({
+TabExtras:AddButton({
     Name = "Teleportar para o Topo",
+    Description = "Teleporta para o alto do mapa",
     Callback = function()
-        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
             hrp.CFrame = hrp.CFrame + Vector3.new(0, 200, 0)
-            OrionLib:MakeNotification({Name="Topo!", Content="Teleportado para o topo!", Image="rbxassetid://7734053495", Time=2})
         end
     end
 })
 
--- Função extra: Anti-AFK
-ExtraTab:AddToggle({
+TabExtras:AddToggle({
     Name = "Anti-AFK",
+    Description = "Evita ser kickado por inatividade",
     Default = true,
     Callback = function(Value)
-        if Value then
-            OrionLib:MakeNotification({Name="Anti-AFK", Content="Ativado!", Image="rbxassetid://7734053495", Time=2})
-            if getconnections then
-                for _,v in pairs(getconnections(LocalPlayer.Idled)) do
-                    v:Disable()
-                end
+        if Value and getconnections then
+            for _,v in pairs(getconnections(lp.Idled)) do
+                v:Disable()
             end
-        else
-            OrionLib:MakeNotification({Name="Anti-AFK", Content="Desativado!", Image="rbxassetid://7734053495", Time=2})
         end
     end
 })
-
-OrionLib:Init()
