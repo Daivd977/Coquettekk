@@ -1,0 +1,178 @@
+-- Biblioteca UI
+local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
+local Window = redzlib:MakeWindow({
+    Title = "Coquette Hub 1.0",
+    SubTitle = "by Lolytadev",
+    SaveFolder = "CoquetteSave"
+})
+
+Window:AddMinimizeButton({
+    Button = { Image = "rbxassetid://135441295532401", BackgroundTransparency = 0 },
+    Corner = { CornerRadius = UDim.new(35, 1) },
+})
+
+local Tab1 = Window:MakeTab({"Home", "home"})
+local Tab2 = Window:MakeTab({"Auto Fish", "fish"})
+local Tab3 = Window:MakeTab({"Misc", "star"})
+local Tab4 = Window:MakeTab({"Teleport", "map"})
+local Tab5 = Window:MakeTab({"Performance", "cpu"})
+local Tab6 = Window:MakeTab({"ESP", "eye"})
+local Tab7 = Window:MakeTab({"Stats", "bar-chart"})
+local Tab8 = Window:MakeTab({"Info", "info"})
+
+Tab1:AddDiscordInvite({
+    Name = "Coquette Studio",
+    Description = "https://discord.gg/3JuzpSsWMy",
+    Logo = "rbxassetid://134568674618533",
+    Invite = "https://discord.gg/3JuzpSsWMy",
+})
+
+local function detectExecutor()
+    if identifyexecutor then return identifyexecutor()
+    elseif syn then return "Synapse X"
+    elseif KRNL_LOADED then return "KRNL"
+    elseif is_sirhurt_closure then return "SirHurt"
+    elseif pebc_execute then return "ProtoSmasher"
+    elseif getexecutorname then return getexecutorname()
+    else return "Executor Desconhecido" end
+end
+Tab1:AddParagraph({"Executor", detectExecutor()})
+Tab1:AddParagraph({"Criadores", "Lolyta\n?????"})
+
+getgenv().selectedZoneCast = "Deep Ocean"
+local fishing, mouseMethod, delayTime = false, true, 0.3
+local v36, v37 = nil, false
+
+local function AutoFishLoop()
+    task.spawn(function()
+        while fishing do
+            local pg = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+            if not pg then task.wait() continue end
+            local ui = pg:FindFirstChild("shakeui")
+            if ui and ui.Enabled then
+                local safe = ui:FindFirstChild("safezone")
+                local btn = safe and safe:FindFirstChild("button")
+                if btn and btn.Visible then
+                    local pos, size = btn.AbsolutePosition, btn.AbsoluteSize
+                    if mouseMethod then
+                        local vim = game:GetService("VirtualInputManager")
+                        vim:SendMouseButtonEvent(pos.X + size.X/2, pos.Y + size.Y/2, 0, true, game, 0)
+                        vim:SendMouseButtonEvent(pos.X + size.X/2, pos.Y + size.Y/2, 0, false, game, 0)
+                    else
+                        local gs = game:GetService("GuiService")
+                        gs.SelectedObject = btn
+                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+                    end
+                end
+            end
+            task.wait(delayTime)
+        end
+    end)
+end
+
+local function ZoneCasting()
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character
+    local tool = char and char:FindFirstChildOfClass("Tool")
+    local bobber = tool and tool:FindFirstChild("bobber")
+    if not bobber then return end
+
+    local pos = {
+        ["Deep Ocean"] = Vector3.new(1521, 126, -3543),
+        ["Moosewood Docks"] = Vector3.new(345, 126, 214),
+        ["Roslit Bay"] = Vector3.new(-1650, 126, 504)
+    }
+    local castPos = pos[getgenv().selectedZoneCast]
+    if castPos then
+        bobber.CFrame = CFrame.new(castPos)
+    end
+end
+
+local function SellHoldingFish()
+    workspace.world.npcs["Marc Merchant"].merchant.sell:InvokeServer()
+end
+
+local function SellAllFishes()
+    workspace.world.npcs["Marc Merchant"].merchant.sellall:InvokeServer()
+end
+
+local function AppraiseFish()
+    workspace.world.npcs.Appraiser.appraiser.appraise:InvokeServer()
+end
+
+Tab4:AddButton({
+    Name = "Selecionar posição",
+    Callback = function()
+        local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            v36 = hrp.CFrame
+            Tab4:AddParagraph({"Posição salva:", tostring(math.floor(hrp.Position.X)) .. ", " .. tostring(math.floor(hrp.Position.Y)) .. ", " .. tostring(math.floor(hrp.Position.Z))})
+        end
+    end
+})
+
+Tab4:AddToggle({
+    Name = "Teleportar continuamente",
+    Default = false,
+    Callback = function(v)
+        v37 = v
+        while v37 do
+            local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and v36 then
+                hrp.CFrame = v36
+            end
+            task.wait(0.1)
+        end
+    end
+})
+
+Tab2:AddDropdown({
+    Name = "Modo de clique",
+    Options = {"Mouse", "Phantom"},
+    Default = "Mouse",
+    Callback = function(val) mouseMethod = (val == "Mouse") end
+})
+
+Tab2:AddSlider({
+    Name = "Delay",
+    Min = 0.1,
+    Max = 1,
+    Increase = 0.1,
+    Default = 0.3,
+    Callback = function(val) delayTime = val end
+})
+
+Tab2:AddToggle({
+    Name = "Auto Fish",
+    Default = false,
+    Callback = function(state)
+        fishing = state
+        if state then AutoFishLoop() end
+    end
+})
+
+Tab2:AddDropdown({
+    Name = "Zona de pesca",
+    Options = {"Deep Ocean", "Moosewood Docks", "Roslit Bay"},
+    Default = "Deep Ocean",
+    Callback = function(zone)
+        getgenv().selectedZoneCast = zone
+        ZoneCasting()
+    end
+})
+
+Tab3:AddButton({
+    Name = "Vender peixe na mão",
+    Callback = SellHoldingFish
+})
+
+Tab3:AddButton({
+    Name = "Vender todos peixes",
+    Callback = SellAllFishes
+})
+
+Tab3:AddButton({
+    Name = "Avaliar peixe",
+    Callback = AppraiseFish
+})
