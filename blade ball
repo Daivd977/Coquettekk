@@ -102,7 +102,7 @@ local function createLoadingScreen()
             -- Exibe a notificação de boas-vindas
             StarterGui:SetCore("SendNotification", {
                 Title = "Coquette Hub",
-                Text = "Bem-vindo à Coquette Hub 💖",
+                Text = "Bem-vindo à Coquette Hub ",
                 Duration = 4
             })
             
@@ -135,13 +135,13 @@ print("Loading completo! Agora executando o resto do script...")
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui"))()
 
 local Window = redzlib:MakeWindow({
-    Title = "Coquette Hub 3.6",
-    SubTitle = "by Lolytadev 💖",
+    Title = "Coquette Hub 3.7_Nova_era",
+    SubTitle = "by Lolytadev ",
     SaveFolder = "teste"
   })
 
   Window:AddMinimizeButton({
-    Button = { Image = "rbxassetid://135441295532401", BackgroundTransparency = 0 },
+    Button = { Image = "rbxassetid://89018617324929", BackgroundTransparency = 0 },
     Corner = { CornerRadius = UDim.new(35, 1) },
 })
 
@@ -201,14 +201,14 @@ local executorName = detectExecutor()
 
 local Paragraph = Tab1:AddParagraph({"Execultor", executorName})
 
-local Section = Tab1:AddSection({"versao do Hub 3.6"})
+local Section = Tab1:AddSection({"versao do Hub 3.7"})
 
 local Paragraph = Tab1:AddParagraph({"Criadores", "Lolyta \n ?????"})
 
 
   
   Tab1:AddButton({
-    Name = "📌🔗 - Copiar @ do TikTok",
+    Name = " - Copiar @ do TikTok",
     Callback = function()
       setclipboard("@lolytauwu") -- Copia o @
       setclipboard("https://www.tiktok.com/@lolytauwu?_t=ZM-8wFjhRHkmOd&_r=1") -- Copia o link também, se quiser só o @, remova esta linha
@@ -2149,27 +2149,45 @@ end
 createSoundDropdown("Selecione um meme", {
     ["Memes"] = {
         {name = "pankapakan", id = "122547522269143"}, 
-        {name = "gemido", id = "106835463235574"},
-        {name = "gemidao v2", id = "112179417472137"},
+       
         {name = "Gemido ultra rápido", id = "128863565301778"},
         {name = "vai g0z@?", id = "116293771329297"},
+        {name = "G0z33iiii", id = "93462644278510"},
         {name = "Hommmm ", id = "133135656929513"},
-        {name = "gemido", id = "105263704862377"},
-        {name = " gemido", id = "92186909873950"},
+        {name = "gemido1", id = "105263704862377"},
+        {name = " gemido2", id = "92186909873950"},
         {name = "sus sex", id = "128137573022197"},
         {name = "gemido estranho", id = "131219411501419"},
         {name = "gemido kawai", id = "100409245129170"},
-        {name = "Hentai gemido", id = "125037339642322"},
         {name = "Hentai wiaaaaan", id = "88332347208779"},
         {name = "iamete cunasai", id = "108494476595033"},
         {name = "dodichan onnn...", id = "134640594695384"},
         {name = "Loly gemiD0", id = "119277017538197"},
          {name = "ai poison", id = "115870718113313"},
          {name = "chegachega SUS", id = "77405864184828"},
-
-
-
-
+         {name = "uwu", id = "76820720070248"},
+         {name = "ai meu cuzin", id = "130714479795369"},
+         {name = "girl audio 2", id = "84207358477461"},
+        {name = "Hoo ze da manga", id = "106624090319571"},
+        {name = "ai alexandre de moraes", id = "107261471941570"},
+        {name = "haaii meme", id = "120006672159037"},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+ 
+    
 
 
         {name = "GoGogo gogogo", id = "103262503950995"},
@@ -2205,9 +2223,33 @@ createSoundDropdown("Selecione um meme", {
         {name = "OLHA O CARRO DO DANONE", id = "110493863773948"},
         {name = "Nãoooo, Nãoooo, Nãooo!!!!!", id = "95825536480898"},
         {name = "UM PÉ DE SIRIGUELA KK", id = "112804043442210"},
-        {name = "e o carro da pamonha🌽😋", id = "94951629392683"},
+        {name = "e o carro da pamonha", id = "94951629392683"},
         {name = "BOM DIAAAAAAAAAA", id = "136579844511260"},
         {name = "ai-meu-chiclete", id = "92911732806153"},
+        {name = "posso te ligar ou tua mulher...", id = "103211341252816"},
+        {name = "Boa chi joga muito cara", id = "110707564387669"},
+        {name = "Oqueee meme", id = "120092799810101"},
+        {name = "kkk muito fei", id = "79241074803021"},
+        {name = "lula cade o ze gotinha", id = "86012585992725"},
+        {name = "morreu", id = "8872409975"},
+        {name = "a-pia-ta-cheia-de-louca", id = "98076927129047"},
+        {name = "Mahito killSong", id = "128669424001766"},
+        {name = "Sucumba", id = "7946300950"},
+        {name = "nem clicou o thurzin", id = "84428355313544"},
+        {name = "fiui OLHA MENSAGEM", id = "121668429878811"},
+        {name = "tooomeee", id = "128319664118768"},
+        {name = "risada de ladrao", id = "133065882609605"},
+        {name = "E o PIX nada ainda", id = "113831443375212"},
+        {name = "Vo nada vo nada", id = "89093085290586"},
+        {name = "Eli gosta", id = "105012436535315"},
+        {name = "um cavalo de tres pernas?", id = "8164241439"},
+        {name = "voces sao um bado de fdp", id = "8232773326"},
+        {name = "HAHA TROLLEI ATÉ VOCÊ", id = "7021794555"},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
         {name = "", id = ""},
         {name = "", id = ""},
         {name = "", id = ""},
@@ -2284,6 +2326,21 @@ createSoundDropdown("Selecione um terror ou efeito", {
         {name = "Memealertsiren", id = "8379374771"},
         {name = "sirenv3", id = "6766811806"},
         {name = "Alarm estourAAAA...", id = "93354528379052"},
+        {name = "MegaMan Alarm", id = "1442382907"},
+        {name = "Alarm bookhaven", id = "1526192493"},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+
+
+
         {name = "alet malaysia", id = "7714172940"},
         {name = "Risada", id = "79191730206814"},
         {name = "Hahahah", id = "90096947219465"},
@@ -2314,7 +2371,19 @@ createSoundDropdown("Selecione um terror ou efeito", {
         {name = "a sla medo dino", id = "125506416092123"},
         {name = "Backrooms Bacteria Pitfalls ", id = "81325342128575"},
         
-        {name = "", id = ""},
+        {name = "error Infinite", id = "3893790326"},
+        {name = "Screaming Meme", id = "107732411055226"},
+        {name = "Jumpscare - SCP CB", id = "97098997494905"},
+        {name = "mirror jumpscare", id = "80005164589425"},
+        {name = "PTLD-39 Jumpscare", id = "5581462381"},
+        {name = "jumpscare:Play()", id = "121519648044128"},
+        {name = "mimic jumpscare", id = "91998575878959"},
+        {name = "DOORS Glitch Jumpscare Sound", id = "96377507894391"},
+        {name = "FNAS 4 Nightmare Mario", id = "99804224106385"},
+        {name = "Death House I Jumpscare Sound", id = "8151488745"},
+        {name = "Shinky Jumpscare", id = "123447772144411"},
+        {name = "FNaTI Jumpscare Oblitus casa", id = "18338717319"},
+        {name = "fnaf jumpscare loadmode", id = "18911896588"},
         {name = "", id = ""},
         {name = "", id = ""},
         {name = "", id = ""},
@@ -2496,6 +2565,17 @@ createMusicDropdown("Funk", {
         {name = "V7", id = "80348640826643"},
         {name = "UIUAH", id = "82894376737849"},
         {name = "meta ritmo", id = "110091098283354"},
+        {name = "CAPPUCCINO ASSASSINO (SPEDUP)", id = "132733033157915"},
+        {name = "haha (NGI)", id = "122114766584918"},
+        {name = "DO PO", id = "114207745067816"},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
+        {name = "", id = ""},
         {name = "", id = ""},
         {name = "", id = ""},
         {name = "", id = ""},
@@ -2581,7 +2661,7 @@ createMusicDropdown("Phonk", {
         {name = "BRR BRR PATAPIM FUNK", id = "117170901476451"},
         {name = "MONTAGEM TERRA BELA FUNK", id = "134770548505933"},
         {name = "FUNK DO RAVE 1.0", id = "137135395010424"},
-        {name = " Bala Trafika FUNK", id = "137179635212128"},
+        
         {name = " Portao Funk", id = "70900514961735"},
         {name = " Espaço Funk", id = "110519906029322"},
         {name = " FUTABA", id = "91834632690710"},
@@ -2611,10 +2691,10 @@ createMusicDropdown("Phonk", {
         {name = "DA ZONA NTJ VERSON", id = "105770593501071"},
         {name = "HIPNOTIZA", id = "132015050363205"},
         {name = "MIDZUKI speed up", id = "129151948619922"},
-        {name = " TE FUISTE FUNK", id = "119897721867249"},
-        {name = "", id = ""},
-        {name = "", id = ""},
-        {name = "", id = ""},
+        
+        {name = "movimenta funk", id = "114994598691121"},
+        {name = "CRISTAL", id = "103445348511856"},
+        {name = "Letero funkphonk", id = "99409598156364"},
         {name = "", id = ""},
         {name = "", id = ""},
         {name = "", id = ""},
@@ -2634,7 +2714,6 @@ Tab8:AddButton({
         tocarMusica("")
     end
 })
-
 
 
 
@@ -4892,24 +4971,10 @@ local function stopFling()
     end)
 end
 
--- Função para causar lag no servidor (usando destinoCelular)
-local function lagServerMobile()
-    if not lagLoopCelularAtivo then return end
-    pcall(function()
-        for i = 1, 5 do -- Reduzido para evitar lag excessivo
-            local part = Instance.new("Part")
-            part.Size = Vector3.new(1, 1, 1)
-            part.Position = destinoCelular + Vector3.new(math.random(-5, 5), math.random(0, 5), math.random(-5, 5))
-            part.Anchored = true
-            part.Parent = Workspace
-            game:GetService("Debris"):AddItem(part, 1) -- Remove após 1 segundo
-            task.wait(0.2) -- Atraso maior para celulares
-        end
-    end)
-end
+
 
 -- Toggle para flingar todos os jogadores
-Tab1:AddToggle({
+Tab9:AddToggle({
     Name = "Flingar Todos os Jogadores",
     Default = false,
     Callback = function(v)
@@ -4925,24 +4990,7 @@ Tab1:AddToggle({
     end
 })
 
--- Toggle para lag no servidor (otimizado para celular)
-Tab10:AddToggle({
-    Name = "💾 Lag Server Celular",
-    Default = false,
-    Callback = function(v)
-        lagLoopCelularAtivo = v
-        if v then
-            showNotification("Lag Ativado", "Causando lag no servidor em " .. tostring(destinoCelular) .. ".", nil)
-            loopConexaoCelular = RunService.Heartbeat:Connect(lagServerMobile)
-        else
-            if loopConexaoCelular then
-                loopConexaoCelular:Disconnect()
-                loopConexaoCelular = nil
-            end
-            showNotification("Lag Desativado", "Parou de causar lag no servidor.", nil)
-        end
-    end
-})
+
 
 -- Interface da whitelist
 Tab9:AddTextBox({
