@@ -3069,7 +3069,7 @@ end)
 updateDropdown(DropdownPlayerTab2, SpectateToggleTab10)
 
 
-
+local Section = Tab9:AddSection({"Kill"})
 
 local DropdownKillPullMethod = Tab9:AddDropdown({
     Name = "Selecionar Método (Matar/Puxar)",
@@ -3384,12 +3384,12 @@ Tab9:AddButton({
     end
 })
 
-
+local Section = Tab9:AddSection({" flings"})
 
 local DropdownFlingMethod = Tab9:AddDropdown({
     Name = "Selecionar Método de Fling",
     Description = "Escolha o método para aplicar fling",
-    Options = {"Sofá", "Ônibus", "Bola V2", "Barco", "Caminhão"},
+    Options = {"Sofá", "Ônibus", "Bola", "Bola V2", "Barco", "Caminhão"},
     Callback = function(value)
         selectedFlingMethod = value
     end
@@ -3541,7 +3541,118 @@ local function flingWithSofa(targetPlayer)
 end
 
 
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                   --fling com bola--
+---------------------------------------------------------------------------------------------------------------------------------------------------------
 
+local function equipBola()
+    local backpack = LocalPlayer:WaitForChild("Backpack")
+    local bola = backpack:FindFirstChild("SoccerBall") or LocalPlayer.Character:FindFirstChild("SoccerBall")
+    if not bola then
+        local args = { [1] = "PickingTools", [2] = "SoccerBall" }
+        local success = pcall(function()
+            ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Too1l"):InvokeServer(unpack(args))
+        end)
+        if not success then return false end
+        repeat
+            bola = backpack:FindFirstChild("SoccerBall")
+            task.wait()
+        until bola or task.wait(5)
+        if not bola then return false end
+    end
+    if bola.Parent ~= LocalPlayer.Character then
+        bola.Parent = LocalPlayer.Character
+    end
+    return true
+end
+
+local function flingWithBall(targetPlayer)
+    if not targetPlayer or not targetPlayer.Character then return end
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local myHRP = character:FindFirstChild("HumanoidRootPart")
+    if not humanoid or not myHRP then return end
+    if not equipBola() then return end
+    task.wait(0.5)
+    local args = { [1] = "PlayerWantsToDeleteTool", [2] = "SoccerBall" }
+    pcall(function()
+        ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clea1rTool1s"):FireServer(unpack(args))
+    end)
+    local workspaceCom = Workspace:FindFirstChild("WorkspaceCom")
+    if not workspaceCom then return end
+    local soccerBalls = workspaceCom:FindFirstChild("001_SoccerBalls")
+    if not soccerBalls then return end
+    soccerBall = soccerBalls:FindFirstChild("Soccer" .. LocalPlayer.Name)
+    if not soccerBall then return end
+    originalProperties = {
+        Anchored = soccerBall.Anchored,
+        CanCollide = soccerBall.CanCollide,
+        CanTouch = soccerBall.CanTouch
+    }
+    soccerBall.Anchored = false
+    soccerBall.CanCollide = true
+    soccerBall.CanTouch = true
+    pcall(function() soccerBall:SetNetworkOwner(nil) end)
+    savedPosition = myHRP.Position
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then part.CanCollide = false end
+    end
+    if humanoid then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        humanoid.Sit = false
+    end
+    for _, seat in ipairs(Workspace:GetDescendants()) do
+        if seat:IsA("Seat") or seat:IsA("VehicleSeat") then seat.Disabled = true end
+    end
+    pcall(function()
+        ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clothe1s"):FireServer("CharacterSizeDown", 4)
+    end)
+    running = true
+    local lastFlingTime = 0
+    connection = RunService.Heartbeat:Connect(function()
+        if not running or not targetPlayer.Character then return end
+        local hrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = targetPlayer.Character:FindFirstChild("Humanoid")
+        local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp or not hum or not myHRP then return end
+        local moveDir = hum.MoveDirection
+        local isStill = moveDir.Magnitude < 0.1
+        local isSitting = hum.Sit
+        if isSitting then
+            local y = math.sin(tick() * 50) * 2
+            soccerBall.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 0.75 + y, 0))
+        elseif isStill then
+            local z = math.sin(tick() * 50) * 3
+            soccerBall.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 0.75, z))
+        else
+            local offset = moveDir.Unit * math.clamp(hrp.Velocity.Magnitude * 0.15, 5, 12)
+            soccerBall.CFrame = CFrame.new(hrp.Position + offset + Vector3.new(0, 0.75, 0))
+        end
+        myHRP.CFrame = CFrame.new(soccerBall.Position + Vector3.new(0, 1, 0))
+    end)
+    flingConnection = RunService.Heartbeat:Connect(function()
+        if not running or not targetPlayer.Character then return end
+        local hrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        local dist = (soccerBall.Position - hrp.Position).Magnitude
+        if dist < 4 and tick() - lastFlingTime > 0.4 then
+            lastFlingTime = tick()
+            for _, part in ipairs(targetPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+            local fling = Instance.new("BodyVelocity")
+            fling.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            fling.Velocity = Vector3.new(math.random(-5, 5), 5, math.random(-5, 5)).Unit * 500000 + Vector3.new(0, 250000, 0)
+            fling.Parent = hrp
+            task.delay(0.3, function()
+                fling:Destroy()
+                for _, part in ipairs(targetPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = true end
+                end
+            end)
+        end
+    end)
+end
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
                                                   --fling bola v2--
@@ -4183,6 +4294,8 @@ flingToggle = Tab9:AddToggle({
             end
             if selectedFlingMethod == "Sofá" then
                 flingWithSofa(selectedPlayer)
+            elseif selectedFlingMethod == "Bola" then
+                flingWithBall(selectedPlayer)
             elseif selectedFlingMethod == "Bola V2" then
                 flingWithBallV2(selectedPlayer)
             elseif selectedFlingMethod == "Barco" then
