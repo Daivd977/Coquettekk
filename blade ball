@@ -3069,7 +3069,7 @@ end)
 updateDropdown(DropdownPlayerTab2, SpectateToggleTab10)
 
 
-local Section = Tab9:AddSection({"Kill"})
+
 
 local DropdownKillPullMethod = Tab9:AddDropdown({
     Name = "Selecionar Método (Matar/Puxar)",
