@@ -1290,6 +1290,7 @@ task.spawn(function()
                     tags[p]:Destroy()
                     tags[p] = nil
                 end
+            end
         end
     end
 end)
